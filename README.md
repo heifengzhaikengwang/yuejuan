@@ -4,10 +4,9 @@
 
 ## 使用步骤
 
-1. 下载 OpenCV Android SDK 4.8
-2. 导入 openCVLibrary480
-3. Sync Gradle
-4. 连接手机运行
+1. 在 Android Studio 中打开项目
+2. Sync Gradle
+3. 连接手机运行
 
 ## 功能
 
@@ -16,3 +15,8 @@
 - 扫描件化
 - 自动裁题
 - 错题归档
+
+## GitHub 构建
+
+项目已配置 GitHub Actions 持续集成，每次推送都会自动构建。
+

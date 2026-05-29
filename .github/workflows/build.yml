@@ -25,5 +25,15 @@ jobs:
       with:
         gradle-version: '8.0'
 
+    - name: Download OpenCV Android SDK
+      run: |
+        cd openCVLibrary480
+        curl -L -o opencv.zip https://github.com/opencv/opencv/releases/download/4.8.0/opencv-4.8.0-android-sdk.zip
+        unzip -q opencv.zip
+        cp -r OpenCV-android-sdk/sdk/java/src/main/java/* src/main/java/
+        mkdir -p src/main/jniLibs
+        cp -r OpenCV-android-sdk/sdk/native/libs/* src/main/jniLibs/
+        rm -rf opencv.zip OpenCV-android-sdk
+
     - name: Build with Gradle
       run: gradle build --stacktrace

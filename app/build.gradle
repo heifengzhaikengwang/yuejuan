@@ -33,6 +33,5 @@ dependencies {
     implementation "androidx.camera:camera-view:1.3.0"
     implementation "androidx.viewpager2:viewpager2:1.0.0"
 
-    // Use OpenCV from JitPack (built from official OpenCV repo)
-    implementation 'com.github.quickbirdstudios:OpenCV-Android:4.8.0'
+    implementation project(':openCVLibrary480')
 }

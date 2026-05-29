@@ -32,10 +32,14 @@ jobs:
         unzip -q opencv.zip
         ls -la OpenCV-android-sdk/
         ls -la OpenCV-android-sdk/sdk/
+        ls -la OpenCV-android-sdk/sdk/java/
         mkdir -p src/main/java
-        cp -r OpenCV-android-sdk/sdk/java/org src/main/java/
+        cp -r OpenCV-android-sdk/sdk/java/src/* src/main/java/ || cp -r OpenCV-android-sdk/sdk/java/* src/main/java/
         mkdir -p src/main/jniLibs
         cp -r OpenCV-android-sdk/sdk/native/libs/* src/main/jniLibs/
+        ls -la src/main/
+        ls -la src/main/java/
+        ls -la src/main/jniLibs/
         rm -rf opencv.zip OpenCV-android-sdk
 
     - name: Build with Gradle

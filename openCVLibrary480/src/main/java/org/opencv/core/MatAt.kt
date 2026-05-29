@@ -1,3 +1,5 @@
+@file:Suppress("ExperimentalUnsignedTypes")
+
 package org.opencv.core
 
 import org.opencv.core.Mat.*

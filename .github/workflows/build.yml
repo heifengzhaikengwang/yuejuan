@@ -32,6 +32,8 @@ jobs:
         unzip -q opencv.zip
         mv OpenCV-android-sdk/sdk openCVLibrary480
         rm -rf opencv.zip OpenCV-android-sdk
+        # Add namespace to OpenCV build.gradle
+        sed -i 's/android {/android {\n    namespace "org.opencv"/' openCVLibrary480/build.gradle
 
     - name: Build with Gradle
       run: gradle build --stacktrace

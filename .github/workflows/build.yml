@@ -27,13 +27,13 @@ jobs:
 
     - name: Download and setup OpenCV Android SDK
       run: |
-        rm -rf openCVLibrary480
+        rm -rf openCVLibrary480/src/main/java openCVLibrary480/src/main/jniLibs
+        mkdir -p openCVLibrary480/src/main/java openCVLibrary480/src/main/jniLibs
         curl -L -o opencv.zip https://github.com/opencv/opencv/releases/download/4.8.0/opencv-4.8.0-android-sdk.zip
         unzip -q opencv.zip
-        mv OpenCV-android-sdk/sdk openCVLibrary480
+        cp -r OpenCV-android-sdk/sdk/java/src/* openCVLibrary480/src/main/java/
+        cp -r OpenCV-android-sdk/sdk/native/libs/* openCVLibrary480/src/main/jniLibs/
         rm -rf opencv.zip OpenCV-android-sdk
-        # Add namespace to OpenCV build.gradle
-        sed -i 's/android {/android {\n    namespace "org.opencv"/' openCVLibrary480/build.gradle
 
     - name: Build with Gradle
       run: gradle build --stacktrace

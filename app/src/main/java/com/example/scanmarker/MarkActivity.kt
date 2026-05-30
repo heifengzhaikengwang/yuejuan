@@ -123,13 +123,34 @@ class MarkActivity : AppCompatActivity() {
     }
 
     private fun cropQuestions() {
-        if (processedBitmap == null) {
+        if (alignedMat == null) {
             Toast.makeText(this, "请先处理图片", Toast.LENGTH_SHORT).show()
             return
         }
 
-        Toast.makeText(this, "切题功能开发中", Toast.LENGTH_SHORT).show()
-        saveButton.isEnabled = true
+        try {
+            Toast.makeText(this, "正在切题...", Toast.LENGTH_SHORT).show()
+
+            val timeStamp = System.currentTimeMillis()
+            val outputDir = File(getExternalFilesDir(Environment.DIRECTORY_PICTURES), "questions_$timeStamp")
+            if (!outputDir.exists()) {
+                outputDir.mkdirs()
+            }
+
+            val cropManager = CropManager()
+            val croppedFiles = cropManager.cropAllQuestions(alignedMat!!, outputDir)
+
+            saveButton.isEnabled = true
+
+            Toast.makeText(
+                this,
+                "切题完成！共 ${croppedFiles.size} 道题目\n保存位置: ${outputDir.absolutePath}",
+                Toast.LENGTH_LONG
+            ).show()
+
+        } catch (e: Exception) {
+            Toast.makeText(this, "切题失败: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
     }
 
     private fun saveResult() {

@@ -19,14 +19,6 @@ android {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
-
-    sourceSets {
-        main {
-            jniLibs.srcDir 'src/main/jniLibs'
-            java.srcDirs = ['src/main/java']
-            res.srcDirs = ['src/main/res']
-        }
-    }
 }
 
 dependencies {

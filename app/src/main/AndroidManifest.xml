@@ -2,6 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.CAMERA"/>
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
 
     <application
@@ -22,6 +23,9 @@
 
         <activity android:name=".MarkActivity"/>
         <activity android:name=".CropConfigActivity"/>
+        <activity android:name=".batch.BatchCameraActivity"/>
+        <activity android:name=".batch.BatchManagerActivity"/>
+        <activity android:name=".batch.BatchProcessorActivity"/>
 
     </application>
 </manifest>

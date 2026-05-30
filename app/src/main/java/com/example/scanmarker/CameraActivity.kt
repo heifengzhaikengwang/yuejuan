@@ -2,7 +2,10 @@ package com.example.scanmarker
 
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
-import androidx.camera.core.*
+import androidx.camera.core.CameraSelector
+import androidx.camera.core.ImageCapture
+import androidx.camera.core.Preview
+import androidx.camera.core.PreviewView
 import androidx.camera.lifecycle.ProcessCameraProvider
 import java.util.concurrent.Executors
 
@@ -24,7 +27,7 @@ class CameraActivity : AppCompatActivity() {
             val cameraProvider = cameraProviderFuture.get()
 
             val preview = Preview.Builder().build()
-            val viewFinder: PreviewView = findViewById(R.id.viewFinder)
+            val viewFinder = findViewById<PreviewView>(R.id.viewFinder)
             preview.setSurfaceProvider(viewFinder.surfaceProvider)
 
             imageCapture = ImageCapture.Builder()

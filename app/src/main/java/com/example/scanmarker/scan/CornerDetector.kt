@@ -6,12 +6,18 @@ import kotlin.math.*
 
 class CornerDetector {
 
+    companion object {
+        const val MIN_MARKER_AREA = 2000
+        const val MAX_MARKER_AREA = 100000
+        const val BINARY_THRESHOLD = 80.0
+    }
+
     fun detect(mat: Mat): MatOfPoint2f {
         val gray = Mat()
         Imgproc.cvtColor(mat, gray, Imgproc.COLOR_RGBA2GRAY)
 
         val bin = Mat()
-        Imgproc.threshold(gray, bin, 80.0, 255.0, Imgproc.THRESH_BINARY_INV)
+        Imgproc.threshold(gray, bin, BINARY_THRESHOLD, 255.0, Imgproc.THRESH_BINARY_INV)
 
         val contours = ArrayList<MatOfPoint>()
         Imgproc.findContours(
@@ -22,7 +28,7 @@ class CornerDetector {
 
         val rects = contours
             .map { Imgproc.boundingRect(it) }
-            .filter { it.area() > 8000 }
+            .filter { it.area() > MIN_MARKER_AREA && it.area() < MAX_MARKER_AREA }
 
         if (rects.size < 4) {
             return getFallbackCorners(mat)
@@ -63,7 +69,7 @@ class CornerDetector {
             }
         }
 
-        if (validCombinations.isNotEmpty()) {
+        if (validCombinations.isNotEmpty) {
             return validCombinations.maxByOrNull { it.quality }!!.points
         }
 

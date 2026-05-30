@@ -1,8 +1,9 @@
 package com.example.scanmarker.scan
 
 import android.graphics.Bitmap
+import com.example.scanmarker.MarkActivity
+import org.opencv.android.Utils
 import org.opencv.core.*
-import org.opencv.imgproc.Imgproc
 import java.io.File
 import java.io.FileOutputStream
 
@@ -11,6 +12,7 @@ class CropManager {
     fun cropAllQuestions(
         mat: Mat,
         outputDir: File,
+        studentInfo: MarkActivity.StudentInfo = MarkActivity.StudentInfo(),
         questionRows: Int = 5,
         questionCols: Int = 2
     ): List<File> {
@@ -30,6 +32,8 @@ class CropManager {
         val gapVertical = 20
         val gapHorizontal = 30
 
+        val studentPrefix = buildStudentPrefix(studentInfo)
+
         for (row in 0 until questionRows) {
             for (col in 0 until questionCols) {
                 val questionNum = row * questionCols + col + 1
@@ -43,7 +47,8 @@ class CropManager {
                     val rect = Rect(x, y, width, height)
                     val croppedMat = Mat(mat, rect)
 
-                    val file = File(outputDir, "question_$questionNum.jpg")
+                    val fileName = "${studentPrefix}question_${questionNum}.jpg"
+                    val file = File(outputDir, fileName)
                     saveMatAsImage(croppedMat, file)
                     croppedImages.add(file)
 
@@ -53,6 +58,13 @@ class CropManager {
         }
 
         return croppedImages
+    }
+
+    private fun buildStudentPrefix(studentInfo: MarkActivity.StudentInfo): String {
+        val parts = mutableListOf<String>()
+        if (studentInfo.studentId.isNotEmpty()) parts.add(studentInfo.studentId)
+        if (studentInfo.studentName.isNotEmpty()) parts.add(studentInfo.studentName)
+        return if (parts.isNotEmpty()) "${parts.joinToString("_")}_" else ""
     }
 
     fun cropSingleQuestion(mat: Mat, row: Int, col: Int, questionRows: Int = 5, questionCols: Int = 2): Mat {

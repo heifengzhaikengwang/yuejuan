@@ -171,7 +171,7 @@ class BatchProcessorActivity : AppCompatActivity() {
                     Toast.makeText(this@BatchProcessorActivity, "模板对齐成功，现在统一裁切所有图片", Toast.LENGTH_LONG).show()
                 }
             } catch (e: Exception) {
-                Toast.makeText(this, "对齐失败: ${e.message}", Toast.LENGTH_LONG).show()
+                Toast.makeText(this@BatchProcessorActivity, "对齐失败: ${e.message}", Toast.LENGTH_LONG).show()
                 e.printStackTrace()
             }
         }
@@ -260,7 +260,7 @@ class BatchProcessorActivity : AppCompatActivity() {
                     Toast.makeText(this@BatchProcessorActivity, "所有图片已处理完成", Toast.LENGTH_SHORT).show()
                 }
             } catch (e: Exception) {
-                Toast.makeText(this, "裁切失败: ${e.message}", Toast.LENGTH_LONG).show()
+                Toast.makeText(this@BatchProcessorActivity, "裁切失败: ${e.message}", Toast.LENGTH_LONG).show()
                 e.printStackTrace()
             }
         }

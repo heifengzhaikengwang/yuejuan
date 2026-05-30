@@ -8,6 +8,7 @@ import android.media.ThumbnailUtils
 import android.os.Build
 import android.provider.MediaStore
 import android.util.Size
+import com.example.scanmarker.CropBox
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.io.File
@@ -102,16 +103,17 @@ class BatchManager(private val context: Context) {
         return true
     }
 
-    fun batchUpdateStudentInfo(items: List<Pair<String, BatchItem.StudentInfo>>): Boolean {
+    fun batchUpdateStudentInfo(items: List<Pair<String, Triple<String, String, String>>>): Boolean {
         val batch = getCurrentBatch() ?: return false
         
         val itemMap = items.toMap()
         val updatedItems = batch.items.map { item ->
-            itemMap[item.id]?.let { info ->
+            itemMap[item.id]?.let { triple: Triple<String, String, String> ->
+                val (id, name, cls) = triple
                 item.copy(
-                    studentId = info.studentId,
-                    studentName = info.studentName,
-                    classInfo = info.classInfo
+                    studentId = id,
+                    studentName = name,
+                    classInfo = cls
                 )
             } ?: item
         }

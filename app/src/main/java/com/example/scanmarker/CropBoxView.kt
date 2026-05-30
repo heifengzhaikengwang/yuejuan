@@ -212,7 +212,7 @@ class CropBoxView @JvmOverloads constructor(
         val dy = y - lastTouchY
 
         if (draggingCorner != null) {
-            val newBox = when (draggingCorner) {
+            val newBox = when (draggingCorner!!) {
                 Corner.TOP_LEFT -> box.copy(left = box.left + dx, top = box.top + dy)
                 Corner.TOP_RIGHT -> box.copy(right = box.right + dx, top = box.top + dy)
                 Corner.BOTTOM_RIGHT -> box.copy(right = box.right + dx, bottom = box.bottom + dy)

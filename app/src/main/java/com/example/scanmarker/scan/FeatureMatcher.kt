@@ -1,8 +1,8 @@
 package com.example.scanmarker.scan
 
+import org.opencv.calib3d.Calib3d
 import org.opencv.core.*
 import org.opencv.features2d.*
-import org.opencv.imgproc.Imgproc
 
 class FeatureMatcher {
 
@@ -14,7 +14,6 @@ class FeatureMatcher {
         targetMat: Mat,
         templateCorners: MatOfPoint2f
     ): MatOfPoint2f {
-        val templateCornersArr = templateCorners.toArray()
         
         try {
             val kp1 = MatOfKeyPoint()
@@ -25,7 +24,7 @@ class FeatureMatcher {
             orb.detectAndCompute(templateMat, Mat(), kp1, desc1)
             orb.detectAndCompute(targetMat, Mat(), kp2, desc2)
 
-            if (kp1.size() < 10 || kp2.size() < 10) {
+            if (kp1.size().height.toInt() < 10 || kp2.size().height.toInt() < 10) {
                 return tryCornerDetection(targetMat)
             }
 
@@ -57,10 +56,10 @@ class FeatureMatcher {
             val srcMat = MatOfPoint2f(*srcPoints.toTypedArray())
             val dstMat = MatOfPoint2f(*dstPoints.toTypedArray())
 
-            val homography = Imgproc.findHomography(
+            val homography = Calib3d.findHomography(
                 srcMat,
                 dstMat,
-                Imgproc.RANSAC,
+                Calib3d.RANSAC,
                 5.0
             )
 

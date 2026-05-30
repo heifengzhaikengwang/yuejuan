@@ -52,7 +52,7 @@ class BatchPhotoAdapter(
             val bitmap = BitmapFactory.decodeFile(path)
             holder.thumbnail.setImageBitmap(bitmap)
         } ?: run {
-            holder.thumbnail.setImageResource(R.drawable.ic_launcher_foreground)
+            holder.thumbnail.setImageResource(android.R.drawable.ic_menu_gallery)
         }
 
         holder.studentNameText.text = if (item.studentName.isNotEmpty()) item.studentName else "未填写姓名"

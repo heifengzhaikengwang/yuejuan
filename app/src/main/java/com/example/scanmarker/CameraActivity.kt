@@ -18,20 +18,21 @@ class CameraActivity : AppCompatActivity() {
     }
 
     private fun startCamera() {
-        val providerFuture = ProcessCameraProvider.getInstance(this)
+        val cameraProviderFuture = ProcessCameraProvider.getInstance(this)
 
-        providerFuture.addListener({
-            val provider = providerFuture.get()
+        cameraProviderFuture.addListener({
+            val cameraProvider = cameraProviderFuture.get()
 
             val preview = Preview.Builder().build()
-            preview.setSurfaceProvider(findViewById(R.id.viewFinder).surfaceProvider)
+            val viewFinder: PreviewView = findViewById(R.id.viewFinder)
+            preview.setSurfaceProvider(viewFinder.surfaceProvider)
 
             imageCapture = ImageCapture.Builder()
                 .setTargetResolution(android.util.Size(2160, 3840))
                 .build()
 
-            provider.unbindAll()
-            provider.bindToLifecycle(
+            cameraProvider.unbindAll()
+            cameraProvider.bindToLifecycle(
                 this,
                 CameraSelector.DEFAULT_BACK_CAMERA,
                 preview,

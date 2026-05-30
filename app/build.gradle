@@ -11,6 +11,9 @@ android {
         applicationId "com.example.scanmarker"
         minSdk 24
         targetSdk 34
+        ndk {
+            abiFilters 'armeabi-v7a', 'arm64-v8a'
+        }
     }
 
     compileOptions {
@@ -20,6 +23,18 @@ android {
 
     kotlinOptions {
         jvmTarget = "1.8"
+    }
+
+    buildTypes {
+        debug {
+            minifyEnabled false
+            shrinkResources false
+        }
+        release {
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
     }
 }
 

@@ -15,4 +15,5 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "ScanMarker"
-include ':app', ':openCVLibrary480'
+include ':app'
+include ':openCVLibrary480'

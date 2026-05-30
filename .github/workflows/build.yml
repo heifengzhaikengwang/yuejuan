@@ -24,9 +24,11 @@ jobs:
       run: chmod +x gradlew
 
     - name: Build with Gradle
-      uses: gradle/actions/setup-gradle@v3
+      uses: gradle/actions/setup-gradle@v4
       with:
         arguments: assembleDebug
+        cache-read-only: false
+        cache-disabled: true
 
     - name: Upload APK
       uses: actions/upload-artifact@v4

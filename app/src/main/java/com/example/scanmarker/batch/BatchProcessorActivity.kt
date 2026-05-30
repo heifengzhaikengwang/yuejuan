@@ -18,6 +18,7 @@ import com.example.scanmarker.CropConfigActivity
 import com.example.scanmarker.MarkActivity
 import com.example.scanmarker.scan.CornerDetector
 import com.example.scanmarker.scan.CropManager
+import com.example.scanmarker.scan.FeatureMatcher
 import com.example.scanmarker.scan.PaperAligner
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -26,7 +27,6 @@ import org.opencv.android.Utils
 import org.opencv.core.Mat
 import org.opencv.core.MatOfPoint2f
 import java.io.File
-import java.io.FileOutputStream
 
 class BatchProcessorActivity : AppCompatActivity() {
 
@@ -47,6 +47,7 @@ class BatchProcessorActivity : AppCompatActivity() {
     private val cornerDetector = CornerDetector()
     private val paperAligner = PaperAligner()
     private val cropManager = CropManager()
+    private val featureMatcher = FeatureMatcher()
 
     private var currentStep = 1
 
@@ -109,11 +110,6 @@ class BatchProcessorActivity : AppCompatActivity() {
             }
 
             when {
-                b.alignMatrix != null -> {
-                    currentStep = 2
-                    updateStepIndicator()
-                    startButton.text = "开始裁切"
-                }
                 b.isProcessed -> {
                     currentStep = 3
                     updateStepIndicator()
@@ -144,16 +140,17 @@ class BatchProcessorActivity : AppCompatActivity() {
                 batch?.let { b ->
                     val templateItem = b.items.getOrNull(b.templateIndex) ?: return@launch
                     
-                    statusText.text = "正在对齐..."
+                    statusText.text = "正在对齐模板..."
                     previewImage.setImageBitmap(BitmapFactory.decodeFile(templateItem.imagePath))
 
                     withContext(Dispatchers.Default) {
-                        val mat = Mat()
-                        val bitmap = BitmapFactory.decodeFile(templateItem.imagePath)
-                        Utils.bitmapToMat(bitmap, mat)
-
-                        val corners: MatOfPoint2f = cornerDetector.detect(mat)
-                        val alignedMat = paperAligner.align(mat, corners)
+                        b.loadTemplateData(templateItem.imagePath)
+                        
+                        val mat = b.templateMat ?: return@withContext
+                        b.templateCorners = cornerDetector.detect(mat)
+                        b.templateTransformMatrix = paperAligner.getPerspectiveMatrix(b.templateCorners!!)
+                        
+                        val alignedMat = paperAligner.alignWithMatrix(mat, b.templateTransformMatrix!!)
 
                         val alignedBitmap = Bitmap.createBitmap(
                             alignedMat.cols(), alignedMat.rows(), Bitmap.Config.ARGB_8888
@@ -163,7 +160,6 @@ class BatchProcessorActivity : AppCompatActivity() {
                         withContext(Dispatchers.Main) {
                             previewImage.setImageBitmap(alignedBitmap)
                             alignedMat.release()
-                            mat.release()
                         }
                     }
 
@@ -172,10 +168,11 @@ class BatchProcessorActivity : AppCompatActivity() {
                     startButton.text = "开始裁切"
                     statusText.text = "对齐完成！"
 
-                    Toast.makeText(this@BatchProcessorActivity, "对齐成功", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@BatchProcessorActivity, "模板对齐成功，现在统一裁切所有图片", Toast.LENGTH_LONG).show()
                 }
             } catch (e: Exception) {
                 Toast.makeText(this, "对齐失败: ${e.message}", Toast.LENGTH_LONG).show()
+                e.printStackTrace()
             }
         }
     }
@@ -197,8 +194,27 @@ class BatchProcessorActivity : AppCompatActivity() {
                                     val bitmap = BitmapFactory.decodeFile(item.imagePath)
                                     Utils.bitmapToMat(bitmap, mat)
 
-                                    val corners: MatOfPoint2f = cornerDetector.detect(mat)
-                                    val alignedMat = paperAligner.align(mat, corners)
+                                    val alignedMat = if (index == b.templateIndex) {
+                                        paperAligner.alignWithMatrix(mat, b.templateTransformMatrix!!)
+                                    } else {
+                                        try {
+                                            val matchedCorners = featureMatcher.findMatchingCorners(
+                                                b.templateMat!!,
+                                                mat,
+                                                b.templateCorners!!
+                                            )
+                                            val transformMatrix = paperAligner.getPerspectiveMatrix(matchedCorners)
+                                            paperAligner.alignWithMatrix(mat, transformMatrix)
+                                        } catch (e: Exception) {
+                                            try {
+                                                val corners = cornerDetector.detect(mat)
+                                                paperAligner.align(mat, corners)
+                                            } catch (e2: Exception) {
+                                                e2.printStackTrace()
+                                                paperAligner.alignWithMatrix(mat, b.templateTransformMatrix!!)
+                                            }
+                                        }
+                                    }
 
                                     val studentInfo = MarkActivity.StudentInfo(
                                         studentId = item.studentId,
@@ -245,6 +261,7 @@ class BatchProcessorActivity : AppCompatActivity() {
                 }
             } catch (e: Exception) {
                 Toast.makeText(this, "裁切失败: ${e.message}", Toast.LENGTH_LONG).show()
+                e.printStackTrace()
             }
         }
     }
@@ -254,6 +271,7 @@ class BatchProcessorActivity : AppCompatActivity() {
             .setTitle("保存完成")
             .setMessage("所有图片已处理完成！\n\n结果保存在: Pictures/batch_${batch?.batchId}")
             .setPositiveButton("确定") { _, _ ->
+                batch?.release()
                 batchManager.clearBatch()
                 Toast.makeText(this, "批次已清空", Toast.LENGTH_SHORT).show()
                 finish()
@@ -262,5 +280,10 @@ class BatchProcessorActivity : AppCompatActivity() {
                 Toast.makeText(this, "请到Pictures文件夹查看结果", Toast.LENGTH_LONG).show()
             }
             .show()
+    }
+    
+    override fun onDestroy() {
+        super.onDestroy()
+        batch?.release()
     }
 }

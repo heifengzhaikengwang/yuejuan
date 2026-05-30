@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>答题卡设计示例</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        h1 {
+            text-align: center;
+            color: white;
+            margin-bottom: 20px;
+            font-size: 2.5rem;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+        .subtitle {
+            text-align: center;
+            color: rgba(255,255,255,0.9);
+            margin-bottom: 40px;
+            font-size: 1.1rem;
+        }
+        .examples-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+        .example-card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            transition: transform 0.3s ease;
+        }
+        .example-card:hover {
+            transform: translateY(-5px);
+        }
+        .example-card h2 {
+            color: #667eea;
+            margin-bottom: 16px;
+            font-size: 1.3rem;
+        }
+        .canvas-wrapper {
+            background: #f5f5f5;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 16px;
+            display: flex;
+            justify-content: center;
+        }
+        canvas {
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .specs {
+            background: #f8f9fa;
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+        }
+        .specs h3 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 1rem;
+        }
+        .specs ul {
+            list-style: none;
+            color: #666;
+        }
+        .specs li {
+            padding: 4px 0;
+            padding-left: 20px;
+            position: relative;
+        }
+        .specs li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #667eea;
+            font-weight: bold;
+        }
+        .good-bad {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .good {
+            border: 3px solid #4CAF50;
+        }
+        .bad {
+            border: 3px solid #f44336;
+        }
+        .label {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .good .label {
+            background: #4CAF50;
+            color: white;
+        }
+        .bad .label {
+            background: #f44336;
+            color: white;
+        }
+        .features {
+            margin-top: 40px;
+            background: white;
+            border-radius: 16px;
+            padding: 32px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+        }
+        .features h2 {
+            color: #667eea;
+            margin-bottom: 24px;
+            font-size: 1.8rem;
+            text-align: center;
+        }
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 24px;
+        }
+        .feature {
+            text-align: center;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 12px;
+        }
+        .feature-icon {
+            width: 60px;
+            height: 60px;
+            background: #667eea;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 28px;
+            margin-bottom: 12px;
+        }
+        .feature h3 {
+            color: #333;
+            margin-bottom: 8px;
+        }
+        .feature p {
+            color: #666;
+            font-size: 0.95rem;
+        }
+        .btn-download {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 12px 32px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            margin-top: 20px;
+        }
+        .btn-download:hover {
+            background: #5568d3;
+            transform: scale(1.05);
+        }
+        .download-section {
+            text-align: center;
+            margin-top: 30px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📋 答题卡设计示例</h1>
+        <p class="subtitle">查看程序需要什么样的答题卡格式</p>
+
+        <div class="examples-grid">
+            <div class="example-card">
+                <h2>标准四角标记</h2>
+                <div class="canvas-wrapper">
+                    <canvas id="canvas1" width="300" height="420"></canvas>
+                </div>
+                <div class="specs">
+                    <h3>✅ 符合要求</h3>
+                    <ul>
+                        <li>四个角有黑色定位方块</li>
+                        <li>定位方块大小适中</li>
+                        <li>背景干净</li>
+                        <li>题目区域清晰</li>
+                    </ul>
+                </div>
+                <div class="download-section">
+                    <a href="#" class="btn-download" onclick="downloadCanvas('canvas1', 'standard-answer-sheet.png')">下载样图</a>
+                </div>
+            </div>
+
+            <div class="example-card">
+                <h2>圆角定位标记</h2>
+                <div class="canvas-wrapper">
+                    <canvas id="canvas2" width="300" height="420"></canvas>
+                </div>
+                <div class="specs">
+                    <h3>✅ 符合要求</h3>
+                    <ul>
+                        <li>使用圆角矩形定位</li>
+                        <li>位置在四角附近</li>
+                        <li>颜色足够深</li>
+                    </ul>
+                </div>
+                <div class="download-section">
+                    <a href="#" class="btn-download" onclick="downloadCanvas('canvas2', 'rounded-markers.png')">下载样图</a>
+                </div>
+            </div>
+
+            <div class="example-card">
+                <h2>大号标记</h2>
+                <div class="canvas-wrapper">
+                    <canvas id="canvas3" width="300" height="420"></canvas>
+                </div>
+                <div class="specs">
+                    <h3>⚠️ 也可以接受</h3>
+                    <ul>
+                        <li>标记较大但仍然有效</li>
+                        <li>程序会自动过滤大小</li>
+                        <li>当前支持 2000-100000 像素</li>
+                    </ul>
+                </div>
+                <div class="download-section">
+                    <a href="#" class="btn-download" onclick="downloadCanvas('canvas3', 'large-markers.png')">下载样图</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="examples-grid" style="grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));">
+            <div class="example-card good">
+                <h2>✅ 正确示例</h2>
+                <span class="label">GOOD</span>
+                <div class="canvas-wrapper">
+                    <canvas id="canvasGood" width="280" height="392"></canvas>
+                </div>
+                <div class="specs">
+                    <h3>特点</h3>
+                    <ul>
+                        <li>四个清晰的黑色定位块</li>
+                        <li>位置分布均匀</li>
+                        <li>背景干净整洁</li>
+                        <li>标记颜色足够深</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="example-card bad">
+                <h2>❌ 错误示例</h2>
+                <span class="label">BAD</span>
+                <div class="canvas-wrapper">
+                    <canvas id="canvasBad" width="280" height="392"></canvas>
+                </div>
+                <div class="specs">
+                    <h3>问题</h3>
+                    <ul>
+                        <li>定位标记太浅（灰色）</li>
+                        <li>标记大小不够</li>
+                        <li>背景杂乱</li>
+                        <li>标记位置不在四角</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="features">
+            <h2>🎯 程序检测逻辑</h2>
+            <div class="features-grid">
+                <div class="feature">
+                    <div class="feature-icon">1</div>
+                    <h3>灰度转换</h3>
+                    <p>将图片转为黑白处理</p>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">2</div>
+                    <h3>二值化</h3>
+                    <p>阈值 80，区分黑白</p>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">3</div>
+                    <h3>找轮廓</h3>
+                    <p>检测黑色方块轮廓</p>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">4</div>
+                    <h3>过滤大小</h3>
+                    <p>只保留 2000-100000 像素</p>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">5</div>
+                    <h3>四角匹配</h3>
+                    <p>选出最佳4个位置</p>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">6</div>
+                    <h3>透视变换</h3>
+                    <p>裁切成标准 A4 尺寸</p>
+                </div>
+            </div>
+
+            <div style="margin-top: 40px; padding: 24px; background: #f0f4ff; border-radius: 12px;">
+                <h3 style="color: #667eea; margin-bottom: 16px;">💡 参数调整</h3>
+                <p style="color: #555; margin-bottom: 12px;">当前检测参数（可在代码中调整）：</p>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
+                    <div style="background: white; padding: 16px; border-radius: 8px;">
+                        <strong style="color: #667eea;">最小标记面积</strong>
+                        <p style="color: #666; margin-top: 8px;">2000 像素</p>
+                    </div>
+                    <div style="background: white; padding: 16px; border-radius: 8px;">
+                        <strong style="color: #667eea;">最大标记面积</strong>
+                        <p style="color: #666; margin-top: 8px;">100000 像素</p>
+                    </div>
+                    <div style="background: white; padding: 16px; border-radius: 8px;">
+                        <strong style="color: #667eea;">二值化阈值</strong>
+                        <p style="color: #666; margin-top: 8px;">80（0-255）</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function drawAnswerSheet1(ctx, w, h) {
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, w, h);
+            
+            ctx.fillStyle = '#1a1a1a';
+            ctx.fillRect(15, 15, 40, 40);
+            ctx.fillRect(w - 55, 15, 40, 40);
+            ctx.fillRect(15, h - 55, 40, 40);
+            ctx.fillRect(w - 55, h - 55, 40, 40);
+            
+            ctx.strokeStyle = '#e0e0e0';
+            ctx.lineWidth = 1;
+            for (let i = 80; i < h - 60; i += 30) {
+                ctx.beginPath();
+                ctx.moveTo(60, i);
+                ctx.lineTo(w - 60, i);
+                ctx.stroke();
+            }
+            
+            ctx.fillStyle = '#333';
+            ctx.font = 'bold 18px -apple-system, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('答 题 卡', w/2, 45);
+            
+            ctx.font = '12px -apple-system, sans-serif';
+            for (let i = 0; i < 10; i++) {
+                ctx.fillText(`${i + 1}.`, 45, 105 + i * 30);
+            }
+        }
+
+        function drawAnswerSheet2(ctx, w, h) {
+            ctx.fillStyle = '#fffdf5';
+            ctx.fillRect(0, 0, w, h);
+            
+            ctx.fillStyle = '#2d2d2d';
+            drawRoundedRect(ctx, 12, 12, 45, 45, 8);
+            drawRoundedRect(ctx, w - 57, 12, 45, 45, 8);
+            drawRoundedRect(ctx, 12, h - 57, 45, 45, 8);
+            drawRoundedRect(ctx, w - 57, h - 57, 45, 45, 8);
+            
+            ctx.strokeStyle = '#c9b896';
+            ctx.lineWidth = 3;
+            ctx.strokeRect(8, 8, w - 16, h - 16);
+            
+            ctx.fillStyle = '#5a4a3a';
+            ctx.font = 'bold 16px -apple-system, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('学 生 答 题 卡', w/2, 50);
+        }
+
+        function drawRoundedRect(ctx, x, y, w, h, r) {
+            ctx.beginPath();
+            ctx.moveTo(x + r, y);
+            ctx.lineTo(x + w - r, y);
+            ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+            ctx.lineTo(x + w, y + h - r);
+            ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+            ctx.lineTo(x + r, y + h);
+            ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+            ctx.lineTo(x, y + r);
+            ctx.quadraticCurveTo(x, y, x + r, y);
+            ctx.closePath();
+            ctx.fill();
+        }
+
+        function drawAnswerSheet3(ctx, w, h) {
+            ctx.fillStyle = '#f5f7fa';
+            ctx.fillRect(0, 0, w, h);
+            
+            ctx.fillStyle = '#1a1a2e';
+            ctx.fillRect(10, 10, 60, 60);
+            ctx.fillRect(w - 70, 10, 60, 60);
+            ctx.fillRect(10, h - 70, 60, 60);
+            ctx.fillRect(w - 70, h - 70, 60, 60);
+            
+            ctx.fillStyle = '#0f3460';
+            ctx.fillRect(20, 20, 40, 40);
+            ctx.fillRect(w - 60, 20, 40, 40);
+            ctx.fillRect(20, h - 60, 40, 40);
+            ctx.fillRect(w - 60, h - 60, 40, 40);
+            
+            ctx.fillStyle = '#333';
+            ctx.font = 'bold 14px -apple-system, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('大型标记示例', w/2, 50);
+        }
+
+        function drawGoodExample(ctx, w, h) {
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, w, h);
+            
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(12, 12, 35, 35);
+            ctx.fillRect(w - 47, 12, 35, 35);
+            ctx.fillRect(12, h - 47, 35, 35);
+            ctx.fillRect(w - 47, h - 47, 35, 35);
+            
+            ctx.strokeStyle = '#e8e8e8';
+            ctx.lineWidth = 1;
+            for (let i = 70; i < h - 50; i += 28) {
+                ctx.beginPath();
+                ctx.moveTo(50, i);
+                ctx.lineTo(w - 50, i);
+                ctx.stroke();
+            }
+            
+            ctx.fillStyle = '#333';
+            ctx.font = 'bold 16px -apple-system, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('正确示例', w/2, 40);
+        }
+
+        function drawBadExample(ctx, w, h) {
+            ctx.fillStyle = '#f0f0f0';
+            ctx.fillRect(0, 0, w, h);
+            
+            ctx.fillStyle = '#aaaaaa';
+            ctx.fillRect(50, 50, 20, 20);
+            ctx.fillRect(w - 70, 100, 20, 20);
+            ctx.fillRect(80, h - 100, 20, 20);
+            
+            ctx.fillStyle = '#888';
+            for (let i = 0; i < 10; i++) {
+                ctx.fillRect(Math.random() * (w - 30), Math.random() * (h - 30), 10, 10);
+            }
+            
+            ctx.fillStyle = '#666';
+            ctx.font = 'bold 14px -apple-system, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('错误示例', w/2, 35);
+            ctx.font = '11px -apple-system, sans-serif';
+            ctx.fillText('标记太浅且位置不对', w/2, 55);
+        }
+
+        function downloadCanvas(canvasId, filename) {
+            const canvas = document.getElementById(canvasId);
+            const link = document.createElement('a');
+            link.download = filename;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+
+        window.onload = function() {
+            const canvas1 = document.getElementById('canvas1');
+            drawAnswerSheet1(canvas1.getContext('2d'), canvas1.width, canvas1.height);
+            
+            const canvas2 = document.getElementById('canvas2');
+            drawAnswerSheet2(canvas2.getContext('2d'), canvas2.width, canvas2.height);
+            
+            const canvas3 = document.getElementById('canvas3');
+            drawAnswerSheet3(canvas3.getContext('2d'), canvas3.width, canvas3.height);
+            
+            const canvasGood = document.getElementById('canvasGood');
+            drawGoodExample(canvasGood.getContext('2d'), canvasGood.width, canvasGood.height);
+            
+            const canvasBad = document.getElementById('canvasBad');
+            drawBadExample(canvasBad.getContext('2d'), canvasBad.width, canvasBad.height);
+        };
+    </script>
+</body>
+</html>

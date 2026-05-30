@@ -27,3 +27,9 @@ jobs:
       uses: gradle/actions/setup-gradle@v3
       with:
         arguments: assembleDebug
+
+    - name: Upload APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: ScanMarker-debug
+        path: app/build/outputs/apk/debug/*.apk

@@ -19,6 +19,20 @@ android {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
+
+    sourceSets {
+        main {
+            java {
+                // 只包含核心OpenCV代码，排除相机和服务相关代码
+                exclude 'org/opencv/android/Camera*'
+                exclude 'org/opencv/android/AsyncServiceHelper.java'
+                exclude 'org/opencv/android/InstallCallbackInterface.java'
+                exclude 'org/opencv/android/LoaderCallbackInterface.java'
+                exclude 'org/opencv/android/StaticHelper.java'
+                exclude 'org/opencv/engine/**'
+            }
+        }
+    }
 }
 
 dependencies {

@@ -1,9 +1,11 @@
 package com.example.scanmarker.scan
 
 import android.graphics.Bitmap
+import com.example.scanmarker.CropBox
 import com.example.scanmarker.MarkActivity
 import org.opencv.android.Utils
 import org.opencv.core.*
+import org.opencv.imgproc.Imgproc
 import java.io.File
 import java.io.FileOutputStream
 
@@ -60,11 +62,38 @@ class CropManager {
         return croppedImages
     }
 
-    private fun buildStudentPrefix(studentInfo: MarkActivity.StudentInfo): String {
-        val parts = mutableListOf<String>()
-        if (studentInfo.studentId.isNotEmpty()) parts.add(studentInfo.studentId)
-        if (studentInfo.studentName.isNotEmpty()) parts.add(studentInfo.studentName)
-        return if (parts.isNotEmpty()) "${parts.joinToString("_")}_" else ""
+    fun cropWithCustomBoxes(
+        mat: Mat,
+        outputDir: File,
+        cropBoxes: List<CropBox>,
+        studentInfo: MarkActivity.StudentInfo = MarkActivity.StudentInfo()
+    ): List<File> {
+        val croppedImages = mutableListOf<File>()
+
+        val studentPrefix = buildStudentPrefix(studentInfo)
+
+        cropBoxes.forEachIndexed { index, box ->
+            val rect = box.toRectF()
+            val intRect = Rect(
+                rect.left.toInt().coerceAtLeast(0),
+                rect.top.toInt().coerceAtLeast(0),
+                rect.width().toInt().coerceAtMost(mat.width()),
+                rect.height().toInt().coerceAtMost(mat.height())
+            )
+
+            if (intRect.x + intRect.width <= mat.width() && intRect.y + intRect.height <= mat.height()) {
+                val croppedMat = Mat(mat, intRect)
+
+                val fileName = "${studentPrefix}${box.name}_${index + 1}.jpg"
+                val file = File(outputDir, fileName)
+                saveMatAsImage(croppedMat, file)
+                croppedImages.add(file)
+
+                croppedMat.release()
+            }
+        }
+
+        return croppedImages
     }
 
     fun cropSingleQuestion(mat: Mat, row: Int, col: Int, questionRows: Int = 5, questionCols: Int = 2): Mat {
@@ -89,6 +118,13 @@ class CropManager {
 
         val rect = Rect(x, y, width, height)
         return Mat(mat, rect)
+    }
+
+    private fun buildStudentPrefix(studentInfo: MarkActivity.StudentInfo): String {
+        val parts = mutableListOf<String>()
+        if (studentInfo.studentId.isNotEmpty()) parts.add(studentInfo.studentId)
+        if (studentInfo.studentName.isNotEmpty()) parts.add(studentInfo.studentName)
+        return if (parts.isNotEmpty()) "${parts.joinToString("_")}_" else ""
     }
 
     private fun saveMatAsImage(mat: Mat, file: File) {

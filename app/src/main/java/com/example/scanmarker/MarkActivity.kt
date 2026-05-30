@@ -5,7 +5,6 @@ import android.graphics.BitmapFactory
 import android.os.Bundle
 import android.os.Environment
 import android.widget.Button
-import android.widget.EditText
 import android.widget.ImageView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -22,6 +21,7 @@ import java.io.FileOutputStream
 class MarkActivity : AppCompatActivity() {
 
     private lateinit var imageView: ImageView
+    private lateinit var configCropBtn: Button
     private lateinit var processButton: Button
     private lateinit var cropButton: Button
     private lateinit var saveButton: Button
@@ -52,11 +52,12 @@ class MarkActivity : AppCompatActivity() {
         initViews()
         loadPhoto()
         showStudentInfoDialog()
-        setupButtons()
+        setupListeners()
     }
 
     private fun initViews() {
         imageView = findViewById(R.id.imageView)
+        configCropBtn = findViewById(R.id.configCropBtn)
         processButton = findViewById(R.id.processButton)
         cropButton = findViewById(R.id.cropButton)
         saveButton = findViewById(R.id.saveButton)
@@ -67,9 +68,9 @@ class MarkActivity : AppCompatActivity() {
     private fun showStudentInfoDialog() {
         val dialogView = layoutInflater.inflate(R.layout.dialog_student_info, null)
         
-        val studentIdEdit = dialogView.findViewById<EditText>(R.id.editStudentId)
-        val studentNameEdit = dialogView.findViewById<EditText>(R.id.editStudentName)
-        val classEdit = dialogView.findViewById<EditText>(R.id.editClass)
+        val studentIdEdit = dialogView.findViewById<android.widget.EditText>(R.id.editStudentId)
+        val studentNameEdit = dialogView.findViewById<android.widget.EditText>(R.id.editStudentName)
+        val classEdit = dialogView.findViewById<android.widget.EditText>(R.id.editClass)
 
         val dialog = AlertDialog.Builder(this)
             .setTitle("学生信息")
@@ -95,14 +96,28 @@ class MarkActivity : AppCompatActivity() {
         photoPath = intent.getStringExtra("photoPath")
 
         if (photoPath != null) {
-            loadImage(photoPath!!)
+            try {
+                val file = File(photoPath!!)
+                if (file.exists()) {
+                    originalBitmap = BitmapFactory.decodeFile(photoPath!!)
+                    imageView.setImageBitmap(originalBitmap)
+                } else {
+                    Toast.makeText(this, "图片文件不存在", Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception) {
+                Toast.makeText(this, "加载失败: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
         } else {
             Toast.makeText(this, "未找到图片", Toast.LENGTH_SHORT).show()
             finish()
         }
     }
 
-    private fun setupButtons() {
+    private fun setupListeners() {
+        configCropBtn.setOnClickListener {
+            openCropConfig()
+        }
+
         processButton.setOnClickListener {
             processImage()
         }
@@ -122,6 +137,12 @@ class MarkActivity : AppCompatActivity() {
         backButton.setOnClickListener {
             finish()
         }
+    }
+
+    private fun openCropConfig() {
+        val intent = Intent(this, CropConfigActivity::class.java)
+        intent.putExtra(CropConfigActivity.EXTRA_IMAGE_PATH, photoPath)
+        startActivity(intent)
     }
 
     private fun loadImage(path: String) {
@@ -177,10 +198,12 @@ class MarkActivity : AppCompatActivity() {
                 outputDir.mkdirs()
             }
 
-            val cropManager = CropManager()
-            val croppedFiles = cropManager.cropAllQuestions(alignedMat!!, outputDir, studentInfo)
-
-            saveStudentInfo(outputDir)
+            val cropBoxes = CropConfigActivity.getCropBoxes(this)
+            val croppedFiles = if (cropBoxes.isNotEmpty()) {
+                CropManager().cropWithCustomBoxes(alignedMat!!, outputDir, cropBoxes, studentInfo)
+            } else {
+                CropManager().cropAllQuestions(alignedMat!!, outputDir, studentInfo)
+            }
 
             saveButton.isEnabled = true
 

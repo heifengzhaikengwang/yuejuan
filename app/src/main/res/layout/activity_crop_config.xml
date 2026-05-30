@@ -3,100 +3,101 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@android:color/black">
+    android:background="#121212">
 
     <ImageView
-        android:id="@+id/imageView"
-        android:layout_width="0dp"
+        android:id="@+id/previewImage"
+        android:layout_width="match_parent"
         android:layout_height="0dp"
         android:scaleType="fitCenter"
-        app:layout_constraintBottom_toTopOf="@+id/buttonPanel"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/toolbar"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <com.example.scanmarker.CropBoxView
+        android:id="@+id/cropBoxView"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toTopOf="@+id/toolbar"
         app:layout_constraintTop_toTopOf="parent" />
 
     <LinearLayout
-        android:id="@+id/buttonPanel"
+        android:id="@+id/toolbar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
+        android:background="#2D2D2D"
         android:padding="8dp"
-        android:background="@android:color/white"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent">
+        app:layout_constraintBottom_toBottomOf="parent">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:paddingBottom="8dp">
+            android:gravity="center">
 
             <Button
-                android:id="@+id/configCropBtn"
+                android:id="@+id/addBoxBtn"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:layout_marginEnd="4dp"
-                android:backgroundTint="#9C27B0"
-                android:text="配置裁切框" />
+                android:text="添加裁切框"
+                android:textSize="14sp" />
 
             <Button
-                android:id="@+id/processButton"
+                android:id="@+id/removeBoxBtn"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:layout_marginStart="4dp"
                 android:layout_marginEnd="4dp"
-                android:backgroundTint="#2196F3"
-                android:text="处理" />
+                android:text="删除选中"
+                android:textSize="14sp" />
 
             <Button
-                android:id="@+id/cropButton"
+                android:id="@+id/clearAllBtn"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:layout_marginStart="4dp"
-                android:layout_marginEnd="4dp"
-                android:backgroundTint="#FF9800"
-                android:text="切题"
-                android:enabled="false" />
-
-            <Button
-                android:id="@+id/saveButton"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:layout_marginStart="4dp"
-                android:backgroundTint="#4CAF50"
-                android:text="保存"
-                android:enabled="false" />
-
+                android:text="清空全部"
+                android:textSize="14sp" />
         </LinearLayout>
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal">
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:layout_marginTop="8dp">
 
             <Button
-                android:id="@+id/retakeButton"
+                android:id="@+id/cancelBtn"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:layout_marginEnd="8dp"
-                android:text="重拍" />
+                android:layout_marginEnd="4dp"
+                android:text="取消" />
 
             <Button
-                android:id="@+id/backButton"
+                android:id="@+id/saveBtn"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:layout_marginStart="8dp"
-                android:text="返回" />
-
+                android:layout_marginStart="4dp"
+                android:text="保存配置"
+                android:backgroundTint="#4CAF50" />
         </LinearLayout>
 
+        <TextView
+            android:id="@+id/infoText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="拖动裁切框调整位置，拖动角落调整大小\n点击空白处取消选择"
+            android:textColor="#AAAAAA"
+            android:textSize="12sp"
+            android:gravity="center"
+            android:paddingTop="8dp" />
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

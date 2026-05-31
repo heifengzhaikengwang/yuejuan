@@ -151,8 +151,18 @@ class MarkActivity : AppCompatActivity() {
     }
 
     private fun openCropConfig() {
+        if (croppedPaperBitmap == null) {
+            Toast.makeText(this, "请先裁掉答题卡多余部分", Toast.LENGTH_SHORT).show()
+            return
+        }
+
         val intent = Intent(this, CropConfigActivity::class.java)
-        intent.putExtra(CropConfigActivity.EXTRA_IMAGE_PATH, photoPath)
+        val tempFile = File(cacheDir, "cropped_paper_${System.currentTimeMillis()}.jpg")
+        val fos = FileOutputStream(tempFile)
+        croppedPaperBitmap!!.compress(Bitmap.CompressFormat.JPEG, 100, fos)
+        fos.flush()
+        fos.close()
+        intent.putExtra(CropConfigActivity.EXTRA_IMAGE_PATH, tempFile.absolutePath)
         startActivity(intent)
     }
 
@@ -167,7 +177,9 @@ class MarkActivity : AppCompatActivity() {
             Utils.bitmapToMat(originalBitmap, mat)
 
             val corners: MatOfPoint2f = cornerDetector.detect(mat)
-            croppedPaperMat = paperAligner.align(mat, corners)
+            val alignedMat = paperAligner.align(mat, corners)
+            val adjustedMat = paperAligner.adjustToA4Ratio(alignedMat)
+            croppedPaperMat = paperAligner.resizeToReference(adjustedMat)
 
             croppedPaperBitmap = Bitmap.createBitmap(
                 croppedPaperMat!!.cols(), 
@@ -179,6 +191,8 @@ class MarkActivity : AppCompatActivity() {
             imageView.setImageBitmap(croppedPaperBitmap)
             cropQuestionsButton.isEnabled = true
             
+            adjustedMat.release()
+            alignedMat.release()
             mat.release()
             
             Toast.makeText(this, "已裁掉答题卡多余部分，现在可以裁切题目了", Toast.LENGTH_LONG).show()

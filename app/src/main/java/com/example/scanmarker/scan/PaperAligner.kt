@@ -3,16 +3,12 @@ package com.example.scanmarker.scan
 import org.opencv.core.*
 import org.opencv.imgproc.Imgproc
 import kotlin.math.sqrt
-import kotlin.math.abs
 
 class PaperAligner {
 
     companion object {
-        const val A4_WIDTH_MM = 210.0
-        const val A4_HEIGHT_MM = 297.0
-        const val DPI = 300.0
-        val A4_WIDTH_PIXELS: Double get() = A4_WIDTH_MM * DPI / 25.4
-        val A4_HEIGHT_PIXELS: Double get() = A4_HEIGHT_MM * DPI / 25.4
+        const val A4_RATIO = 210.0 / 297.0
+        const val REFERENCE_WIDTH = 2100.0
     }
 
     fun align(mat: Mat, corners: MatOfPoint2f): Mat {
@@ -30,35 +26,50 @@ class PaperAligner {
         val transformMatrix = getPerspectiveMatrix(corners)
         Imgproc.warpPerspective(mat, result, transformMatrix, Size(avgWidth, avgHeight))
         
-        val resized = resizeToA4Size(result)
-        if (resized !== result) {
-            result.release()
+        return result
+    }
+
+    fun adjustToA4Ratio(mat: Mat): Mat {
+        val currentWidth = mat.cols().toDouble()
+        val currentHeight = mat.rows().toDouble()
+        val currentRatio = currentWidth / currentHeight
+        
+        if (kotlin.math.abs(currentRatio - A4_RATIO) < 0.01) {
+            return mat
         }
         
-        return resized
+        val targetWidth: Double
+        val targetHeight: Double
+        
+        if (currentRatio > A4_RATIO) {
+            targetHeight = currentHeight
+            targetWidth = targetHeight * A4_RATIO
+        } else {
+            targetWidth = currentWidth
+            targetHeight = targetWidth / A4_RATIO
+        }
+        
+        val cropped = Mat()
+        val x = (currentWidth - targetWidth) / 2
+        val y = (currentHeight - targetHeight) / 2
+        val rect = Rect(x.toInt(), y.toInt(), targetWidth.toInt(), targetHeight.toInt())
+        mat(rect).copyTo(cropped)
+        
+        return cropped
     }
 
     fun alignWithMatrix(mat: Mat, transformMatrix: Mat): Mat {
         val result = Mat()
         Imgproc.warpPerspective(mat, result, transformMatrix, mat.size())
-        
-        val resized = resizeToA4Size(result)
-        if (resized !== result) {
-            result.release()
-        }
-        
-        return resized
+        return result
     }
 
-    private fun resizeToA4Size(mat: Mat): Mat {
-        val currentWidth = mat.cols().toDouble()
+    fun resizeToReference(mat: Mat): Mat {
         val currentHeight = mat.rows().toDouble()
-        
-        val targetWidth = A4_WIDTH_PIXELS
-        val targetHeight = A4_HEIGHT_PIXELS
+        val targetHeight = REFERENCE_WIDTH / A4_RATIO
         
         val resized = Mat()
-        Imgproc.resize(mat, resized, Size(targetWidth, targetHeight), 0.0, 0.0, Imgproc.INTER_AREA)
+        Imgproc.resize(mat, resized, Size(REFERENCE_WIDTH, targetHeight), 0.0, 0.0, Imgproc.INTER_AREA)
         
         return resized
     }

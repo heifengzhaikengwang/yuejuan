@@ -11,6 +11,8 @@ import java.io.FileOutputStream
 
 class CropManager {
 
+    private val paperAligner = PaperAligner()
+
     fun cropAllQuestions(
         mat: Mat,
         outputDir: File,
@@ -20,19 +22,21 @@ class CropManager {
     ): List<File> {
         val croppedImages = mutableListOf<File>()
 
-        val marginTop = 150
-        val marginBottom = 100
-        val marginLeft = 80
-        val marginRight = 80
+        val adjustedMat = prepareForCropping(mat)
 
-        val availableHeight = mat.height() - marginTop - marginBottom
-        val availableWidth = mat.width() - marginLeft - marginRight
+        val marginTop = (150 * PaperAligner.REFERENCE_WIDTH / adjustedMat.cols()).toInt()
+        val marginBottom = (100 * PaperAligner.REFERENCE_WIDTH / adjustedMat.cols()).toInt()
+        val marginLeft = (80 * PaperAligner.REFERENCE_WIDTH / adjustedMat.cols()).toInt()
+        val marginRight = (80 * PaperAligner.REFERENCE_WIDTH / adjustedMat.cols()).toInt()
+
+        val availableHeight = adjustedMat.height() - marginTop - marginBottom
+        val availableWidth = adjustedMat.width() - marginLeft - marginRight
 
         val questionHeight = availableHeight / questionRows
         val questionWidth = availableWidth / questionCols
 
-        val gapVertical = 20
-        val gapHorizontal = 30
+        val gapVertical = (20 * PaperAligner.REFERENCE_WIDTH / adjustedMat.cols()).toInt()
+        val gapHorizontal = (30 * PaperAligner.REFERENCE_WIDTH / adjustedMat.cols()).toInt()
 
         val studentPrefix = buildStudentPrefix(studentInfo)
 
@@ -45,9 +49,9 @@ class CropManager {
                 val width = questionWidth - gapHorizontal
                 val height = questionHeight - gapVertical
 
-                if (x >= 0 && y >= 0 && x + width <= mat.width() && y + height <= mat.height()) {
+                if (x >= 0 && y >= 0 && x + width <= adjustedMat.width() && y + height <= adjustedMat.height()) {
                     val rect = Rect(x, y, width, height)
-                    val croppedMat = Mat(mat, rect)
+                    val croppedMat = Mat(adjustedMat, rect)
 
                     val fileName = "${studentPrefix}question_${questionNum}.jpg"
                     val file = File(outputDir, fileName)
@@ -57,6 +61,10 @@ class CropManager {
                     croppedMat.release()
                 }
             }
+        }
+
+        if (adjustedMat !== mat) {
+            adjustedMat.release()
         }
 
         return croppedImages
@@ -70,19 +78,30 @@ class CropManager {
     ): List<File> {
         val croppedImages = mutableListOf<File>()
 
+        val adjustedMat = prepareForCropping(mat)
+
+        val scaleX = PaperAligner.REFERENCE_WIDTH / mat.cols()
+        val scaleY = (PaperAligner.REFERENCE_WIDTH / PaperAligner.A4_RATIO) / mat.rows()
+
         val studentPrefix = buildStudentPrefix(studentInfo)
 
         cropBoxes.forEachIndexed { index, box ->
-            val rect = box.toRectF()
-            val intRect = Rect(
-                rect.left.toInt().coerceAtLeast(0),
-                rect.top.toInt().coerceAtLeast(0),
-                rect.width().toInt().coerceAtMost(mat.width()),
-                rect.height().toInt().coerceAtMost(mat.height())
+            val scaledRect = RectF(
+                box.left * scaleX,
+                box.top * scaleY,
+                box.right * scaleX,
+                box.bottom * scaleY
             )
 
-            if (intRect.x + intRect.width <= mat.width() && intRect.y + intRect.height <= mat.height()) {
-                val croppedMat = Mat(mat, intRect)
+            val intRect = Rect(
+                scaledRect.left.toInt().coerceAtLeast(0),
+                scaledRect.top.toInt().coerceAtLeast(0),
+                scaledRect.width().toInt().coerceAtMost(adjustedMat.width()),
+                scaledRect.height().toInt().coerceAtMost(adjustedMat.height())
+            )
+
+            if (intRect.x + intRect.width <= adjustedMat.width() && intRect.y + intRect.height <= adjustedMat.height()) {
+                val croppedMat = Mat(adjustedMat, intRect)
 
                 val fileName = "${studentPrefix}${box.name}_${index + 1}.jpg"
                 val file = File(outputDir, fileName)
@@ -93,23 +112,40 @@ class CropManager {
             }
         }
 
+        if (adjustedMat !== mat) {
+            adjustedMat.release()
+        }
+
         return croppedImages
     }
 
-    fun cropSingleQuestion(mat: Mat, row: Int, col: Int, questionRows: Int = 5, questionCols: Int = 2): Mat {
-        val marginTop = 150
-        val marginBottom = 100
-        val marginLeft = 80
-        val marginRight = 80
+    private fun prepareForCropping(mat: Mat): Mat {
+        val adjustedMat = paperAligner.adjustToA4Ratio(mat)
+        val resizedMat = paperAligner.resizeToReference(adjustedMat)
 
-        val availableHeight = mat.height() - marginTop - marginBottom
-        val availableWidth = mat.width() - marginLeft - marginRight
+        if (adjustedMat !== mat) {
+            adjustedMat.release()
+        }
+
+        return resizedMat
+    }
+
+    fun cropSingleQuestion(mat: Mat, row: Int, col: Int, questionRows: Int = 5, questionCols: Int = 2): Mat {
+        val adjustedMat = prepareForCropping(mat)
+
+        val marginTop = (150 * PaperAligner.REFERENCE_WIDTH / adjustedMat.cols()).toInt()
+        val marginBottom = (100 * PaperAligner.REFERENCE_WIDTH / adjustedMat.cols()).toInt()
+        val marginLeft = (80 * PaperAligner.REFERENCE_WIDTH / adjustedMat.cols()).toInt()
+        val marginRight = (80 * PaperAligner.REFERENCE_WIDTH / adjustedMat.cols()).toInt()
+
+        val availableHeight = adjustedMat.height() - marginTop - marginBottom
+        val availableWidth = adjustedMat.width() - marginLeft - marginRight
 
         val questionHeight = availableHeight / questionRows
         val questionWidth = availableWidth / questionCols
 
-        val gapVertical = 20
-        val gapHorizontal = 30
+        val gapVertical = (20 * PaperAligner.REFERENCE_WIDTH / adjustedMat.cols()).toInt()
+        val gapHorizontal = (30 * PaperAligner.REFERENCE_WIDTH / adjustedMat.cols()).toInt()
 
         val x = marginLeft + col * questionWidth + gapHorizontal / 2
         val y = marginTop + row * questionHeight + gapVertical / 2
@@ -117,7 +153,13 @@ class CropManager {
         val height = questionHeight - gapVertical
 
         val rect = Rect(x, y, width, height)
-        return Mat(mat, rect)
+        val croppedMat = Mat(adjustedMat, rect)
+
+        if (adjustedMat !== mat) {
+            adjustedMat.release()
+        }
+
+        return croppedMat
     }
 
     private fun buildStudentPrefix(studentInfo: MarkActivity.StudentInfo): String {

@@ -10,6 +10,7 @@ import android.widget.ImageView
 import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
+import android.content.DialogInterface
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
@@ -99,10 +100,12 @@ class BatchProcessorActivity : AppCompatActivity() {
     private fun showAlignmentAndOpenCropConfig() {
         AlertDialog.Builder(this)
             .setTitle("需要先对齐")
-            .setMessage("请先点击"开始对齐"裁掉答题卡多余部分，再配置裁切框。是否现在开始对齐？")
-            .setPositiveButton("现在对齐并配置") { _, _ ->
-                startAlignmentAndOpenCropConfig()
-            }
+            .setMessage("请先点击“开始对齐”裁掉答题卡多余部分，再配置裁切框。是否现在开始对齐？")
+            .setPositiveButton("现在对齐并配置", object : DialogInterface.OnClickListener {
+                override fun onClick(dialog: DialogInterface?, which: Int) {
+                    startAlignmentAndOpenCropConfig()
+                }
+            })
             .setNegativeButton("取消", null)
             .show()
     }

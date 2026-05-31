@@ -1,6 +1,10 @@
 package com.example.scanmarker.scan
 
-import org.opencv.core.*
+import org.opencv.core.Mat
+import org.opencv.core.MatOfPoint2f
+import org.opencv.core.Point
+import org.opencv.core.Rect
+import org.opencv.core.Size
 import org.opencv.imgproc.Imgproc
 import kotlin.math.sqrt
 
@@ -52,7 +56,9 @@ class PaperAligner {
         val x = ((currentWidth - targetWidth) / 2).toInt()
         val y = ((currentHeight - targetHeight) / 2).toInt()
         val rect = Rect(x, y, targetWidth.toInt(), targetHeight.toInt())
-        mat(rect).copyTo(cropped)
+        val roi = Mat(mat, rect)
+        roi.copyTo(cropped)
+        roi.release()
         
         return cropped
     }
@@ -65,10 +71,12 @@ class PaperAligner {
 
     fun resizeToReference(mat: Mat): Mat {
         val currentWidth = mat.cols().toDouble()
-        val targetHeight = REFERENCE_WIDTH / (currentWidth / mat.rows().toDouble())
+        val currentHeight = mat.rows().toDouble()
+        val targetWidth = REFERENCE_WIDTH
+        val targetHeight = targetWidth / (currentWidth / currentHeight)
         
         val resized = Mat()
-        Imgproc.resize(mat, resized, Size(REFERENCE_WIDTH, targetHeight), 0.0, 0.0, Imgproc.INTER_AREA)
+        Imgproc.resize(mat, resized, Size(targetWidth, targetHeight), 0.0, 0.0, Imgproc.INTER_AREA)
         
         return resized
     }

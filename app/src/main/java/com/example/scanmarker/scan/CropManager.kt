@@ -1,10 +1,12 @@
 package com.example.scanmarker.scan
 
 import android.graphics.Bitmap
+import android.graphics.RectF
 import com.example.scanmarker.CropBox
 import com.example.scanmarker.MarkActivity
 import org.opencv.android.Utils
-import org.opencv.core.*
+import org.opencv.core.Mat
+import org.opencv.core.Rect
 import org.opencv.imgproc.Imgproc
 import java.io.File
 import java.io.FileOutputStream

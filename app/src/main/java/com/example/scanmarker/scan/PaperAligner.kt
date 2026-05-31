@@ -3,8 +3,14 @@ package com.example.scanmarker.scan
 import org.opencv.core.*
 import org.opencv.imgproc.Imgproc
 import kotlin.math.sqrt
+import kotlin.math.min
+import kotlin.math.max
 
 class PaperAligner {
+
+    companion object {
+        const val A4_RATIO = 210.0 / 297.0
+    }
 
     fun align(mat: Mat, corners: MatOfPoint2f): Mat {
         val pts = corners.toArray()
@@ -17,12 +23,29 @@ class PaperAligner {
         val avgWidth = (widthTop + widthBottom) / 2.0
         val avgHeight = (heightLeft + heightRight) / 2.0
         
-        val outputWidth = avgWidth.toInt()
-        val outputHeight = avgHeight.toInt()
-        
         val result = Mat()
-        val transformMatrix = getPerspectiveMatrix(corners, outputWidth.toDouble(), outputHeight.toDouble())
-        Imgproc.warpPerspective(mat, result, transformMatrix, Size(outputWidth.toDouble(), outputHeight.toDouble()))
+        val transformMatrix = getPerspectiveMatrix(corners)
+        Imgproc.warpPerspective(mat, result, transformMatrix, Size(avgWidth, avgHeight))
+        
+        val croppedRatio = avgWidth / avgHeight
+        
+        if (kotlin.math.abs(croppedRatio - A4_RATIO) > 0.05) {
+            val targetWidth: Double
+            val targetHeight: Double
+            
+            if (croppedRatio > A4_RATIO) {
+                targetHeight = avgHeight
+                targetWidth = targetHeight * A4_RATIO
+            } else {
+                targetWidth = avgWidth
+                targetHeight = targetWidth / A4_RATIO
+            }
+            
+            val resized = Mat()
+            Imgproc.resize(result, resized, Size(targetWidth, targetHeight), 0.0, 0.0, Imgproc.INTER_LINEAR)
+            result.release()
+            return resized
+        }
         
         return result
     }
@@ -33,7 +56,7 @@ class PaperAligner {
         return result
     }
 
-    fun getPerspectiveMatrix(corners: MatOfPoint2f, outputWidth: Double = 0.0, outputHeight: Double = 0.0): Mat {
+    fun getPerspectiveMatrix(corners: MatOfPoint2f): Mat {
         val pts = corners.toArray()
         
         val widthTop = distance(pts[0], pts[1])
@@ -44,14 +67,11 @@ class PaperAligner {
         val avgWidth = (widthTop + widthBottom) / 2.0
         val avgHeight = (heightLeft + heightRight) / 2.0
         
-        val w = if (outputWidth > 0) outputWidth else avgWidth
-        val h = if (outputHeight > 0) outputHeight else avgHeight
-        
         val dstPts = MatOfPoint2f(
             Point(0.0, 0.0),
-            Point(w, 0.0),
-            Point(w, h),
-            Point(0.0, h)
+            Point(avgWidth, 0.0),
+            Point(avgWidth, avgHeight),
+            Point(0.0, avgHeight)
         )
 
         return Imgproc.getPerspectiveTransform(corners, dstPts)

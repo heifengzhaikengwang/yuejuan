@@ -223,8 +223,8 @@ class BatchProcessorActivity : AppCompatActivity() {
                                     )
 
                                     val outputDir = File(
-                                        getExternalFilesDir(Environment.DIRECTORY_PICTURES),
-                                        "batch_${b.batchId}"
+                                        Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),
+                                        "ScanMarker/batch_${b.batchId}"
                                     )
                                     if (!outputDir.exists()) outputDir.mkdirs()
 
@@ -269,7 +269,7 @@ class BatchProcessorActivity : AppCompatActivity() {
     private fun saveAllResults() {
         AlertDialog.Builder(this)
             .setTitle("保存完成")
-            .setMessage("所有图片已处理完成！\n\n结果保存在: Pictures/batch_${batch?.batchId}")
+            .setMessage("所有图片已处理完成！\n\n结果保存在: Pictures/ScanMarker/batch_${batch?.batchId}")
             .setPositiveButton("确定") { _, _ ->
                 batch?.release()
                 batchManager.clearBatch()
@@ -277,7 +277,7 @@ class BatchProcessorActivity : AppCompatActivity() {
                 finish()
             }
             .setNegativeButton("查看结果") { _, _ ->
-                Toast.makeText(this, "请到Pictures文件夹查看结果", Toast.LENGTH_LONG).show()
+                Toast.makeText(this, "请到Pictures/ScanMarker文件夹查看结果", Toast.LENGTH_LONG).show()
             }
             .show()
     }

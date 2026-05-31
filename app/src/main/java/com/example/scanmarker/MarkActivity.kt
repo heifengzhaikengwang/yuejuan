@@ -194,7 +194,10 @@ class MarkActivity : AppCompatActivity() {
             Toast.makeText(this, "正在切题...", Toast.LENGTH_SHORT).show()
 
             val folderName = buildStudentFolderName()
-            val outputDir = File(getExternalFilesDir(Environment.DIRECTORY_PICTURES), folderName)
+            val outputDir = File(
+                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),
+                "ScanMarker/$folderName"
+            )
             if (!outputDir.exists()) {
                 outputDir.mkdirs()
             }
@@ -210,7 +213,7 @@ class MarkActivity : AppCompatActivity() {
 
             Toast.makeText(
                 this,
-                "切题完成！共 ${croppedFiles.size} 道题目\n学生: ${studentInfo.studentName ?: studentInfo.studentId}\n保存位置: ${outputDir.absolutePath}",
+                "切题完成！共 ${croppedFiles.size} 道题目\n学生: ${studentInfo.studentName ?: studentInfo.studentId}\n保存位置: Pictures/ScanMarker/$folderName",
                 Toast.LENGTH_LONG
             ).show()
 

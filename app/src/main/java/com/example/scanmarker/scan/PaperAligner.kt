@@ -3,13 +3,16 @@ package com.example.scanmarker.scan
 import org.opencv.core.*
 import org.opencv.imgproc.Imgproc
 import kotlin.math.sqrt
-import kotlin.math.min
-import kotlin.math.max
+import kotlin.math.abs
 
 class PaperAligner {
 
     companion object {
-        const val A4_RATIO = 210.0 / 297.0
+        const val A4_WIDTH_MM = 210.0
+        const val A4_HEIGHT_MM = 297.0
+        const val DPI = 300.0
+        val A4_WIDTH_PIXELS: Double get() = A4_WIDTH_MM * DPI / 25.4
+        val A4_HEIGHT_PIXELS: Double get() = A4_HEIGHT_MM * DPI / 25.4
     }
 
     fun align(mat: Mat, corners: MatOfPoint2f): Mat {
@@ -27,33 +30,37 @@ class PaperAligner {
         val transformMatrix = getPerspectiveMatrix(corners)
         Imgproc.warpPerspective(mat, result, transformMatrix, Size(avgWidth, avgHeight))
         
-        val croppedRatio = avgWidth / avgHeight
-        
-        if (kotlin.math.abs(croppedRatio - A4_RATIO) > 0.05) {
-            val targetWidth: Double
-            val targetHeight: Double
-            
-            if (croppedRatio > A4_RATIO) {
-                targetHeight = avgHeight
-                targetWidth = targetHeight * A4_RATIO
-            } else {
-                targetWidth = avgWidth
-                targetHeight = targetWidth / A4_RATIO
-            }
-            
-            val resized = Mat()
-            Imgproc.resize(result, resized, Size(targetWidth, targetHeight), 0.0, 0.0, Imgproc.INTER_LINEAR)
+        val resized = resizeToA4Size(result)
+        if (resized !== result) {
             result.release()
-            return resized
         }
         
-        return result
+        return resized
     }
 
     fun alignWithMatrix(mat: Mat, transformMatrix: Mat): Mat {
         val result = Mat()
         Imgproc.warpPerspective(mat, result, transformMatrix, mat.size())
-        return result
+        
+        val resized = resizeToA4Size(result)
+        if (resized !== result) {
+            result.release()
+        }
+        
+        return resized
+    }
+
+    private fun resizeToA4Size(mat: Mat): Mat {
+        val currentWidth = mat.cols().toDouble()
+        val currentHeight = mat.rows().toDouble()
+        
+        val targetWidth = A4_WIDTH_PIXELS
+        val targetHeight = A4_HEIGHT_PIXELS
+        
+        val resized = Mat()
+        Imgproc.resize(mat, resized, Size(targetWidth, targetHeight), 0.0, 0.0, Imgproc.INTER_AREA)
+        
+        return resized
     }
 
     fun getPerspectiveMatrix(corners: MatOfPoint2f): Mat {

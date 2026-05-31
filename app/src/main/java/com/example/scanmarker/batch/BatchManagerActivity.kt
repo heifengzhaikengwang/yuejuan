@@ -185,15 +185,15 @@ class BatchManagerActivity : AppCompatActivity() {
             .setView(dialogView)
             .setPositiveButton("保存") { _, _ ->
                 val batch = batchManager.getCurrentBatch() ?: return@setPositiveButton
-                val updates = mutableListOf<Pair<String, BatchManager.StudentInfo>>()
+                val updates = mutableListOf<Pair<String, Triple<String, String, String>>>()
                 
                 selected.forEach { itemId ->
                     val item = batch.items.find { it.id == itemId }
                     item?.let {
-                        updates.add(itemId to BatchManager.StudentInfo(
-                            studentId = studentIdEdit.text.toString(),
-                            studentName = studentNameEdit.text.toString(),
-                            classInfo = classEdit.text.toString()
+                        updates.add(itemId to Triple(
+                            studentIdEdit.text.toString(),
+                            studentNameEdit.text.toString(),
+                            classEdit.text.toString()
                         ))
                     }
                 }

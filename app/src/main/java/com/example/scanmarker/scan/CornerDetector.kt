@@ -69,7 +69,7 @@ class CornerDetector {
             }
         }
 
-        if (validCombinations.isNotEmpty) {
+        if (validCombinations.isNotEmpty()) {
             return validCombinations.maxByOrNull { it.quality }!!.points
         }
 

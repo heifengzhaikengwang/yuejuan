@@ -17,7 +17,8 @@ data class BatchData(
     val cropBoxes: List<CropBox> = emptyList(),
     val createdTime: Long = System.currentTimeMillis(),
     val isProcessed: Boolean = false,
-    val processedCount: Int = 0
+    val processedCount: Int = 0,
+    val templateRatio: Double = 0.0
 ) {
     @Transient
     var templateMat: Mat? = null

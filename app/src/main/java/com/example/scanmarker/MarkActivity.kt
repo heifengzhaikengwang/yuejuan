@@ -33,11 +33,13 @@ class MarkActivity : AppCompatActivity() {
     private var originalBitmap: Bitmap? = null
     private var croppedPaperBitmap: Bitmap? = null
     private var croppedPaperMat: Mat? = null
+    private var templateRatio: Double = 0.0
 
     private var studentInfo = StudentInfo()
 
     private val cornerDetector = CornerDetector()
     private val paperAligner = PaperAligner()
+    private val cropManager = CropManager()
 
     data class StudentInfo(
         var studentId: String = "1",
@@ -177,8 +179,10 @@ class MarkActivity : AppCompatActivity() {
             Utils.bitmapToMat(originalBitmap, mat)
 
             val corners: MatOfPoint2f = cornerDetector.detect(mat)
+            templateRatio = paperAligner.getTemplateRatio(corners)
+            
             val alignedMat = paperAligner.align(mat, corners)
-            val adjustedMat = paperAligner.adjustToA4Ratio(alignedMat)
+            val adjustedMat = paperAligner.adjustToTemplateRatio(alignedMat, templateRatio)
             croppedPaperMat = paperAligner.resizeToReference(adjustedMat)
 
             croppedPaperBitmap = Bitmap.createBitmap(
@@ -222,9 +226,9 @@ class MarkActivity : AppCompatActivity() {
 
             val cropBoxes = CropConfigActivity.getCropBoxes(this)
             val croppedFiles = if (cropBoxes.isNotEmpty()) {
-                CropManager().cropWithCustomBoxes(croppedPaperMat!!, outputDir, cropBoxes, studentInfo)
+                cropManager.cropWithCustomBoxes(croppedPaperMat!!, outputDir, cropBoxes, studentInfo, templateRatio)
             } else {
-                CropManager().cropAllQuestions(croppedPaperMat!!, outputDir, studentInfo)
+                cropManager.cropAllQuestions(croppedPaperMat!!, outputDir, studentInfo, templateRatio)
             }
 
             saveButton.isEnabled = true

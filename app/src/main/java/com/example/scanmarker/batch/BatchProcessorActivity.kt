@@ -81,10 +81,8 @@ class BatchProcessorActivity : AppCompatActivity() {
     private fun setupListeners() {
         configCropButton.setOnClickListener {
             if (croppedTemplateImagePath != null) {
-                // 已经对齐了，直接打开配置
                 openCropConfig()
             } else {
-                // 还没对齐，先对齐
                 showAlignmentAndOpenCropConfig()
             }
         }
@@ -101,7 +99,7 @@ class BatchProcessorActivity : AppCompatActivity() {
     private fun showAlignmentAndOpenCropConfig() {
         AlertDialog.Builder(this)
             .setTitle("需要先对齐")
-            .setMessage("请先点击“开始对齐”裁掉答题卡多余部分，再配置裁切框。是否现在开始对齐？")
+            .setMessage("请先点击"开始对齐"裁掉答题卡多余部分，再配置裁切框。是否现在开始对齐？")
             .setPositiveButton("现在对齐并配置") { _, _ ->
                 startAlignmentAndOpenCropConfig()
             }
@@ -122,15 +120,20 @@ class BatchProcessorActivity : AppCompatActivity() {
                         b.loadTemplateData(templateItem.imagePath)
                         
                         val mat = b.templateMat ?: return@withContext
-                        b.templateCorners = cornerDetector.detect(mat)
-                        b.templateTransformMatrix = paperAligner.getPerspectiveMatrix(b.templateCorners!!)
+                        val corners = cornerDetector.detect(mat)
+                        b.templateCorners = corners
+                        b.templateTransformMatrix = paperAligner.getPerspectiveMatrix(corners)
+                        
+                        val templateRatio = paperAligner.getTemplateRatio(corners)
                         
                         val alignedMat = paperAligner.alignWithMatrix(mat, b.templateTransformMatrix!!)
+                        val adjustedMat = paperAligner.adjustToTemplateRatio(alignedMat, templateRatio)
+                        val resizedMat = paperAligner.resizeToReference(adjustedMat)
 
                         val alignedBitmap = Bitmap.createBitmap(
-                            alignedMat.cols(), alignedMat.rows(), Bitmap.Config.ARGB_8888
+                            resizedMat.cols(), resizedMat.rows(), Bitmap.Config.ARGB_8888
                         )
-                        Utils.matToBitmap(alignedMat, alignedBitmap)
+                        Utils.matToBitmap(resizedMat, alignedBitmap)
 
                         val tempFile = File(cacheDir, "cropped_template_${System.currentTimeMillis()}.jpg")
                         val fos = FileOutputStream(tempFile)
@@ -139,8 +142,14 @@ class BatchProcessorActivity : AppCompatActivity() {
                         fos.close()
                         croppedTemplateImagePath = tempFile.absolutePath
 
+                        val updatedBatch = b.copy(templateRatio = templateRatio)
+                        batchManager.saveBatch(updatedBatch)
+                        batch = updatedBatch
+
                         withContext(Dispatchers.Main) {
                             previewImage.setImageBitmap(alignedBitmap)
+                            resizedMat.release()
+                            adjustedMat.release()
                             alignedMat.release()
                             
                             currentStep = 2
@@ -148,7 +157,6 @@ class BatchProcessorActivity : AppCompatActivity() {
                             startButton.text = "开始裁切"
                             statusText.text = "对齐完成！"
                             
-                            // 对齐完成后打开配置裁切框
                             openCropConfig()
                         }
                     }
@@ -224,15 +232,20 @@ class BatchProcessorActivity : AppCompatActivity() {
                         b.loadTemplateData(templateItem.imagePath)
                         
                         val mat = b.templateMat ?: return@withContext
-                        b.templateCorners = cornerDetector.detect(mat)
-                        b.templateTransformMatrix = paperAligner.getPerspectiveMatrix(b.templateCorners!!)
+                        val corners = cornerDetector.detect(mat)
+                        b.templateCorners = corners
+                        b.templateTransformMatrix = paperAligner.getPerspectiveMatrix(corners)
+                        
+                        val templateRatio = paperAligner.getTemplateRatio(corners)
                         
                         val alignedMat = paperAligner.alignWithMatrix(mat, b.templateTransformMatrix!!)
+                        val adjustedMat = paperAligner.adjustToTemplateRatio(alignedMat, templateRatio)
+                        val resizedMat = paperAligner.resizeToReference(adjustedMat)
 
                         val alignedBitmap = Bitmap.createBitmap(
-                            alignedMat.cols(), alignedMat.rows(), Bitmap.Config.ARGB_8888
+                            resizedMat.cols(), resizedMat.rows(), Bitmap.Config.ARGB_8888
                         )
-                        Utils.matToBitmap(alignedMat, alignedBitmap)
+                        Utils.matToBitmap(resizedMat, alignedBitmap)
 
                         val tempFile = File(cacheDir, "cropped_template_${System.currentTimeMillis()}.jpg")
                         val fos = FileOutputStream(tempFile)
@@ -241,16 +254,22 @@ class BatchProcessorActivity : AppCompatActivity() {
                         fos.close()
                         croppedTemplateImagePath = tempFile.absolutePath
 
+                        val updatedBatch = b.copy(templateRatio = templateRatio)
+                        batchManager.saveBatch(updatedBatch)
+                        batch = updatedBatch
+
                         withContext(Dispatchers.Main) {
                             previewImage.setImageBitmap(alignedBitmap)
+                            resizedMat.release()
+                            adjustedMat.release()
                             alignedMat.release()
+                            
+                            currentStep = 2
+                            updateStepIndicator()
+                            startButton.text = "开始裁切"
+                            statusText.text = "对齐完成！"
                         }
                     }
-
-                    currentStep = 2
-                    updateStepIndicator()
-                    startButton.text = "开始裁切"
-                    statusText.text = "对齐完成！"
 
                     Toast.makeText(this@BatchProcessorActivity, "模板对齐成功，现在可以配置裁切框或开始裁切所有图片", Toast.LENGTH_LONG).show()
                 }
@@ -268,6 +287,7 @@ class BatchProcessorActivity : AppCompatActivity() {
                     statusText.text = "正在裁切..."
                     
                     val cropBoxes = CropConfigActivity.getCropBoxes(this@BatchProcessorActivity)
+                    val templateRatio = b.templateRatio
                     var processed = 0
 
                     withContext(Dispatchers.Default) {
@@ -286,7 +306,7 @@ class BatchProcessorActivity : AppCompatActivity() {
                                                 b.templateMat!!,
                                                 mat,
                                                 b.templateCorners!!
-                                        )
+                                            )
                                             val transformMatrix = paperAligner.getPerspectiveMatrix(matchedCorners)
                                             paperAligner.alignWithMatrix(mat, transformMatrix)
                                         } catch (e: Exception) {
@@ -313,9 +333,9 @@ class BatchProcessorActivity : AppCompatActivity() {
                                     if (!outputDir.exists()) outputDir.mkdirs()
 
                                     val croppedFiles = if (cropBoxes.isNotEmpty()) {
-                                        cropManager.cropWithCustomBoxes(alignedMat, outputDir, cropBoxes, studentInfo)
+                                        cropManager.cropWithCustomBoxes(alignedMat, outputDir, cropBoxes, studentInfo, templateRatio)
                                     } else {
-                                        cropManager.cropAllQuestions(alignedMat, outputDir, studentInfo)
+                                        cropManager.cropAllQuestions(alignedMat, outputDir, studentInfo, templateRatio)
                                     }
 
                                     val processedPath = outputDir.absolutePath

@@ -7,7 +7,6 @@ import kotlin.math.sqrt
 class PaperAligner {
 
     companion object {
-        const val A4_RATIO = 210.0 / 297.0
         const val REFERENCE_WIDTH = 2100.0
     }
 
@@ -29,30 +28,30 @@ class PaperAligner {
         return result
     }
 
-    fun adjustToA4Ratio(mat: Mat): Mat {
+    fun adjustToTemplateRatio(mat: Mat, templateRatio: Double, tolerance: Double = 0.01): Mat {
         val currentWidth = mat.cols().toDouble()
         val currentHeight = mat.rows().toDouble()
         val currentRatio = currentWidth / currentHeight
         
-        if (kotlin.math.abs(currentRatio - A4_RATIO) < 0.01) {
+        if (kotlin.math.abs(currentRatio - templateRatio) < tolerance) {
             return mat
         }
         
         val targetWidth: Double
         val targetHeight: Double
         
-        if (currentRatio > A4_RATIO) {
+        if (currentRatio > templateRatio) {
             targetHeight = currentHeight
-            targetWidth = targetHeight * A4_RATIO
+            targetWidth = targetHeight * templateRatio
         } else {
             targetWidth = currentWidth
-            targetHeight = targetWidth / A4_RATIO
+            targetHeight = targetWidth / templateRatio
         }
         
         val cropped = Mat()
-        val x = (currentWidth - targetWidth) / 2
-        val y = (currentHeight - targetHeight) / 2
-        val rect = Rect(x.toInt(), y.toInt(), targetWidth.toInt(), targetHeight.toInt())
+        val x = ((currentWidth - targetWidth) / 2).toInt()
+        val y = ((currentHeight - targetHeight) / 2).toInt()
+        val rect = Rect(x, y, targetWidth.toInt(), targetHeight.toInt())
         mat(rect).copyTo(cropped)
         
         return cropped
@@ -65,13 +64,27 @@ class PaperAligner {
     }
 
     fun resizeToReference(mat: Mat): Mat {
-        val currentHeight = mat.rows().toDouble()
-        val targetHeight = REFERENCE_WIDTH / A4_RATIO
+        val currentWidth = mat.cols().toDouble()
+        val targetHeight = REFERENCE_WIDTH / (currentWidth / mat.rows().toDouble())
         
         val resized = Mat()
         Imgproc.resize(mat, resized, Size(REFERENCE_WIDTH, targetHeight), 0.0, 0.0, Imgproc.INTER_AREA)
         
         return resized
+    }
+
+    fun getTemplateRatio(corners: MatOfPoint2f): Double {
+        val pts = corners.toArray()
+        
+        val widthTop = distance(pts[0], pts[1])
+        val widthBottom = distance(pts[3], pts[2])
+        val heightLeft = distance(pts[0], pts[3])
+        val heightRight = distance(pts[1], pts[2])
+        
+        val avgWidth = (widthTop + widthBottom) / 2.0
+        val avgHeight = (heightLeft + heightRight) / 2.0
+        
+        return avgWidth / avgHeight
     }
 
     fun getPerspectiveMatrix(corners: MatOfPoint2f): Mat {

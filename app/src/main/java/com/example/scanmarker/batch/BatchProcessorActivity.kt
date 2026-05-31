@@ -27,6 +27,7 @@ import org.opencv.android.Utils
 import org.opencv.core.Mat
 import org.opencv.core.MatOfPoint2f
 import java.io.File
+import java.io.FileOutputStream
 
 class BatchProcessorActivity : AppCompatActivity() {
 
@@ -43,6 +44,7 @@ class BatchProcessorActivity : AppCompatActivity() {
 
     private lateinit var batchManager: BatchManager
     private var batch: BatchData? = null
+    private var croppedTemplateImagePath: String? = null
 
     private val cornerDetector = CornerDetector()
     private val paperAligner = PaperAligner()
@@ -79,9 +81,14 @@ class BatchProcessorActivity : AppCompatActivity() {
     private fun setupListeners() {
         configCropButton.setOnClickListener {
             val intent = Intent(this, CropConfigActivity::class.java)
-            val templateItem = batch?.items?.getOrNull(batch?.templateIndex ?: -1)
-            templateItem?.let {
-                intent.putExtra(CropConfigActivity.EXTRA_IMAGE_PATH, it.imagePath)
+            val imagePathToUse = if (croppedTemplateImagePath != null) {
+                croppedTemplateImagePath
+            } else {
+                val templateItem = batch?.items?.getOrNull(batch?.templateIndex ?: -1)
+                templateItem?.imagePath
+            }
+            imagePathToUse?.let {
+                intent.putExtra(CropConfigActivity.EXTRA_IMAGE_PATH, it)
             }
             startActivity(intent)
         }
@@ -157,6 +164,13 @@ class BatchProcessorActivity : AppCompatActivity() {
                         )
                         Utils.matToBitmap(alignedMat, alignedBitmap)
 
+                        val tempFile = File(cacheDir, "cropped_template_${System.currentTimeMillis()}.jpg")
+                        val fos = FileOutputStream(tempFile)
+                        alignedBitmap.compress(Bitmap.CompressFormat.JPEG, 100, fos)
+                        fos.flush()
+                        fos.close()
+                        croppedTemplateImagePath = tempFile.absolutePath
+
                         withContext(Dispatchers.Main) {
                             previewImage.setImageBitmap(alignedBitmap)
                             alignedMat.release()
@@ -168,7 +182,7 @@ class BatchProcessorActivity : AppCompatActivity() {
                     startButton.text = "开始裁切"
                     statusText.text = "对齐完成！"
 
-                    Toast.makeText(this@BatchProcessorActivity, "模板对齐成功，现在统一裁切所有图片", Toast.LENGTH_LONG).show()
+                    Toast.makeText(this@BatchProcessorActivity, "模板对齐成功，现在可以配置裁切框或开始裁切所有图片", Toast.LENGTH_LONG).show()
                 }
             } catch (e: Exception) {
                 Toast.makeText(this@BatchProcessorActivity, "对齐失败: ${e.message}", Toast.LENGTH_LONG).show()
@@ -285,5 +299,11 @@ class BatchProcessorActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         batch?.release()
+        croppedTemplateImagePath?.let { path ->
+            try {
+                File(path).delete()
+            } catch (e: Exception) {
+            }
+        }
     }
 }

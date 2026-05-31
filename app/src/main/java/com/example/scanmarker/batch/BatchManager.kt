@@ -57,8 +57,16 @@ class BatchManager(private val context: Context) {
         
         val thumbnailPath = generateThumbnail(imagePath)
         
+        val nextStudentNumber = getNextStudentNumber(batch)
+        val defaultStudentId = nextStudentNumber.toString()
+        val defaultStudentName = "学生$nextStudentNumber"
+        val defaultClassInfo = "1班"
+        
         val newItem = BatchItem(
             imagePath = imagePath,
+            studentId = defaultStudentId,
+            studentName = defaultStudentName,
+            classInfo = defaultClassInfo,
             thumbnailPath = thumbnailPath,
             addedTime = System.currentTimeMillis()
         )
@@ -72,7 +80,38 @@ class BatchManager(private val context: Context) {
     }
 
     fun addMultiplePhotos(imagePaths: List<String>): List<BatchItem> {
-        return imagePaths.map { path -> addPhotoToBatch(path) }
+        val batch = getCurrentBatch() ?: createBatch()
+        var currentBatch = batch
+        val newItems = mutableListOf<BatchItem>()
+        
+        var nextStudentNumber = getNextStudentNumber(currentBatch)
+        
+        imagePaths.forEach { path ->
+            val thumbnailPath = generateThumbnail(path)
+            
+            val defaultStudentId = nextStudentNumber.toString()
+            val defaultStudentName = "学生$nextStudentNumber"
+            val defaultClassInfo = "1班"
+            
+            val newItem = BatchItem(
+                imagePath = path,
+                studentId = defaultStudentId,
+                studentName = defaultStudentName,
+                classInfo = defaultClassInfo,
+                thumbnailPath = thumbnailPath,
+                addedTime = System.currentTimeMillis()
+            )
+            newItems.add(newItem)
+            
+            currentBatch = currentBatch.copy(
+                items = currentBatch.items + newItem
+            )
+            saveBatch(currentBatch)
+            
+            nextStudentNumber++
+        }
+        
+        return newItems
     }
 
     fun removeItem(itemId: String): Boolean {
@@ -168,6 +207,26 @@ class BatchManager(private val context: Context) {
         }
         
         prefs.edit().remove(KEY_CURRENT_BATCH).apply()
+    }
+
+    private fun getNextStudentNumber(batch: BatchData): Int {
+        var maxNumber = 0
+        
+        batch.items.forEach { item ->
+            val name = item.studentName
+            if (name.startsWith("学生")) {
+                try {
+                    val number = name.removePrefix("学生").toInt()
+                    if (number > maxNumber) {
+                        maxNumber = number
+                    }
+                } catch (e: Exception) {
+                    // 忽略不能转换的情况
+                }
+            }
+        }
+        
+        return maxNumber + 1
     }
 
     private fun generateBatchId(): String {

@@ -40,9 +40,9 @@ class MarkActivity : AppCompatActivity() {
     private val paperAligner = PaperAligner()
 
     data class StudentInfo(
-        var studentId: String = "",
-        var studentName: String = "",
-        var classInfo: String = "",
+        var studentId: String = "1",
+        var studentName: String = "学生1",
+        var classInfo: String = "1班",
         var batchId: String = System.currentTimeMillis().toString()
     )
 
@@ -73,17 +73,24 @@ class MarkActivity : AppCompatActivity() {
         val studentNameEdit = dialogView.findViewById<android.widget.EditText>(R.id.editStudentName)
         val classEdit = dialogView.findViewById<android.widget.EditText>(R.id.editClass)
 
+        // 设置默认值
+        studentIdEdit.setText(studentInfo.studentId)
+        studentNameEdit.setText(studentInfo.studentName)
+        classEdit.setText(studentInfo.classInfo)
+
         val dialog = AlertDialog.Builder(this)
             .setTitle("学生信息")
             .setView(dialogView)
             .setPositiveButton("确定") { _, _ ->
-                studentInfo.studentId = studentIdEdit.text.toString()
-                studentInfo.studentName = studentNameEdit.text.toString()
-                studentInfo.classInfo = classEdit.text.toString()
+                val newStudentId = studentIdEdit.text.toString()
+                val newStudentName = studentNameEdit.text.toString()
+                val newClassInfo = classEdit.text.toString()
                 
-                if (studentInfo.studentId.isNotEmpty() || studentInfo.studentName.isNotEmpty()) {
-                    Toast.makeText(this, "学生信息已保存", Toast.LENGTH_SHORT).show()
-                }
+                studentInfo.studentId = if (newStudentId.isNotEmpty()) newStudentId else studentInfo.studentId
+                studentInfo.studentName = if (newStudentName.isNotEmpty()) newStudentName else studentInfo.studentName
+                studentInfo.classInfo = if (newClassInfo.isNotEmpty()) newClassInfo else studentInfo.classInfo
+                
+                Toast.makeText(this, "学生信息已保存", Toast.LENGTH_SHORT).show()
             }
             .setNegativeButton("跳过") { dialog, _ ->
                 dialog.dismiss()
@@ -223,9 +230,9 @@ class MarkActivity : AppCompatActivity() {
     }
 
     private fun buildStudentFolderName(): String {
-        val namePart = if (studentInfo.studentName.isNotEmpty()) studentInfo.studentName else "unknown"
-        val idPart = if (studentInfo.studentId.isNotEmpty()) "_${studentInfo.studentId}" else ""
-        val classPart = if (studentInfo.classInfo.isNotEmpty()) "_${studentInfo.classInfo}" else ""
+        val namePart = if (studentInfo.studentName.isNotEmpty()) studentInfo.studentName else "学生1"
+        val idPart = if (studentInfo.studentId.isNotEmpty()) "_${studentInfo.studentId}" else "_1"
+        val classPart = if (studentInfo.classInfo.isNotEmpty()) "_${studentInfo.classInfo}" else "_1班"
         return "${namePart}${idPart}${classPart}_${studentInfo.batchId}"
     }
 

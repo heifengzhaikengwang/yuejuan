@@ -80,17 +80,13 @@ class BatchProcessorActivity : AppCompatActivity() {
 
     private fun setupListeners() {
         configCropButton.setOnClickListener {
-            val intent = Intent(this, CropConfigActivity::class.java)
-            val imagePathToUse = if (croppedTemplateImagePath != null) {
-                croppedTemplateImagePath
+            if (croppedTemplateImagePath != null) {
+                // 已经对齐了，直接打开配置
+                openCropConfig()
             } else {
-                val templateItem = batch?.items?.getOrNull(batch?.templateIndex ?: -1)
-                templateItem?.imagePath
+                // 还没对齐，先对齐
+                showAlignmentAndOpenCropConfig()
             }
-            imagePathToUse?.let {
-                intent.putExtra(CropConfigActivity.EXTRA_IMAGE_PATH, it)
-            }
-            startActivity(intent)
         }
 
         startButton.setOnClickListener {
@@ -100,6 +96,80 @@ class BatchProcessorActivity : AppCompatActivity() {
                 3 -> saveAllResults()
             }
         }
+    }
+
+    private fun showAlignmentAndOpenCropConfig() {
+        AlertDialog.Builder(this)
+            .setTitle("需要先对齐")
+            .setMessage("请先点击“开始对齐”裁掉答题卡多余部分，再配置裁切框。是否现在开始对齐？")
+            .setPositiveButton("现在对齐并配置") { _, _ ->
+                startAlignmentAndOpenCropConfig()
+            }
+            .setNegativeButton("取消", null)
+            .show()
+    }
+
+    private fun startAlignmentAndOpenCropConfig() {
+        lifecycleScope.launch {
+            try {
+                batch?.let { b ->
+                    val templateItem = b.items.getOrNull(b.templateIndex) ?: return@launch
+                    
+                    statusText.text = "正在对齐模板..."
+                    previewImage.setImageBitmap(BitmapFactory.decodeFile(templateItem.imagePath))
+
+                    withContext(Dispatchers.Default) {
+                        b.loadTemplateData(templateItem.imagePath)
+                        
+                        val mat = b.templateMat ?: return@withContext
+                        b.templateCorners = cornerDetector.detect(mat)
+                        b.templateTransformMatrix = paperAligner.getPerspectiveMatrix(b.templateCorners!!)
+                        
+                        val alignedMat = paperAligner.alignWithMatrix(mat, b.templateTransformMatrix!!)
+
+                        val alignedBitmap = Bitmap.createBitmap(
+                            alignedMat.cols(), alignedMat.rows(), Bitmap.Config.ARGB_8888
+                        )
+                        Utils.matToBitmap(alignedMat, alignedBitmap)
+
+                        val tempFile = File(cacheDir, "cropped_template_${System.currentTimeMillis()}.jpg")
+                        val fos = FileOutputStream(tempFile)
+                        alignedBitmap.compress(Bitmap.CompressFormat.JPEG, 100, fos)
+                        fos.flush()
+                        fos.close()
+                        croppedTemplateImagePath = tempFile.absolutePath
+
+                        withContext(Dispatchers.Main) {
+                            previewImage.setImageBitmap(alignedBitmap)
+                            alignedMat.release()
+                            
+                            currentStep = 2
+                            updateStepIndicator()
+                            startButton.text = "开始裁切"
+                            statusText.text = "对齐完成！"
+                            
+                            // 对齐完成后打开配置裁切框
+                            openCropConfig()
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                Toast.makeText(this@BatchProcessorActivity, "对齐失败: ${e.message}", Toast.LENGTH_LONG).show()
+                e.printStackTrace()
+            }
+        }
+    }
+
+    private fun openCropConfig() {
+        val intent = Intent(this, CropConfigActivity::class.java)
+        val imagePathToUse = croppedTemplateImagePath ?: run {
+            val templateItem = batch?.items?.getOrNull(batch?.templateIndex ?: -1)
+            templateItem?.imagePath
+        }
+        imagePathToUse?.let {
+            intent.putExtra(CropConfigActivity.EXTRA_IMAGE_PATH, it)
+        }
+        startActivity(intent)
     }
 
     private fun loadBatchData() {
@@ -216,7 +286,7 @@ class BatchProcessorActivity : AppCompatActivity() {
                                                 b.templateMat!!,
                                                 mat,
                                                 b.templateCorners!!
-                                            )
+                                        )
                                             val transformMatrix = paperAligner.getPerspectiveMatrix(matchedCorners)
                                             paperAligner.alignWithMatrix(mat, transformMatrix)
                                         } catch (e: Exception) {

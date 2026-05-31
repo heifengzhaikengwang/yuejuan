@@ -23,16 +23,16 @@ class MarkActivity : AppCompatActivity() {
 
     private lateinit var imageView: ImageView
     private lateinit var configCropBtn: Button
-    private lateinit var processButton: Button
-    private lateinit var cropButton: Button
+    private lateinit var cropPaperButton: Button
+    private lateinit var cropQuestionsButton: Button
     private lateinit var saveButton: Button
     private lateinit var retakeButton: Button
     private lateinit var backButton: Button
 
     private var photoPath: String? = null
     private var originalBitmap: Bitmap? = null
-    private var processedBitmap: Bitmap? = null
-    private var alignedMat: Mat? = null
+    private var croppedPaperBitmap: Bitmap? = null
+    private var croppedPaperMat: Mat? = null
 
     private var studentInfo = StudentInfo()
 
@@ -59,11 +59,15 @@ class MarkActivity : AppCompatActivity() {
     private fun initViews() {
         imageView = findViewById(R.id.imageView)
         configCropBtn = findViewById(R.id.configCropBtn)
-        processButton = findViewById(R.id.processButton)
-        cropButton = findViewById(R.id.cropButton)
+        cropPaperButton = findViewById(R.id.processButton)
+        cropQuestionsButton = findViewById(R.id.cropButton)
         saveButton = findViewById(R.id.saveButton)
         retakeButton = findViewById(R.id.retakeButton)
         backButton = findViewById(R.id.backButton)
+        
+        cropPaperButton.text = "裁掉答题卡多余部分"
+        cropQuestionsButton.text = "裁切题目"
+        cropQuestionsButton.isEnabled = false
     }
 
     private fun showStudentInfoDialog() {
@@ -73,7 +77,6 @@ class MarkActivity : AppCompatActivity() {
         val studentNameEdit = dialogView.findViewById<android.widget.EditText>(R.id.editStudentName)
         val classEdit = dialogView.findViewById<android.widget.EditText>(R.id.editClass)
 
-        // 设置默认值
         studentIdEdit.setText(studentInfo.studentId)
         studentNameEdit.setText(studentInfo.studentName)
         classEdit.setText(studentInfo.classInfo)
@@ -126,11 +129,11 @@ class MarkActivity : AppCompatActivity() {
             openCropConfig()
         }
 
-        processButton.setOnClickListener {
-            processImage()
+        cropPaperButton.setOnClickListener {
+            cropPaper()
         }
 
-        cropButton.setOnClickListener {
+        cropQuestionsButton.setOnClickListener {
             cropQuestions()
         }
 
@@ -153,21 +156,7 @@ class MarkActivity : AppCompatActivity() {
         startActivity(intent)
     }
 
-    private fun loadImage(path: String) {
-        try {
-            val file = File(path)
-            if (file.exists()) {
-                originalBitmap = BitmapFactory.decodeFile(path)
-                imageView.setImageBitmap(originalBitmap)
-            } else {
-                Toast.makeText(this, "图片文件不存在", Toast.LENGTH_SHORT).show()
-            }
-        } catch (e: Exception) {
-            Toast.makeText(this, "加载图片失败: ${e.message}", Toast.LENGTH_SHORT).show()
-        }
-    }
-
-    private fun processImage() {
+    private fun cropPaper() {
         if (originalBitmap == null) {
             Toast.makeText(this, "请先加载图片", Toast.LENGTH_SHORT).show()
             return
@@ -178,27 +167,35 @@ class MarkActivity : AppCompatActivity() {
             Utils.bitmapToMat(originalBitmap, mat)
 
             val corners: MatOfPoint2f = cornerDetector.detect(mat)
-            alignedMat = paperAligner.align(mat, corners)
+            croppedPaperMat = paperAligner.align(mat, corners)
 
-            processedBitmap = Bitmap.createBitmap(alignedMat!!.cols(), alignedMat!!.rows(), Bitmap.Config.ARGB_8888)
-            Utils.matToBitmap(alignedMat, processedBitmap)
+            croppedPaperBitmap = Bitmap.createBitmap(
+                croppedPaperMat!!.cols(), 
+                croppedPaperMat!!.rows(), 
+                Bitmap.Config.ARGB_8888
+            )
+            Utils.matToBitmap(croppedPaperMat, croppedPaperBitmap)
 
-            imageView.setImageBitmap(processedBitmap)
-            cropButton.isEnabled = true
-            Toast.makeText(this, "处理成功", Toast.LENGTH_SHORT).show()
+            imageView.setImageBitmap(croppedPaperBitmap)
+            cropQuestionsButton.isEnabled = true
+            
+            mat.release()
+            
+            Toast.makeText(this, "已裁掉答题卡多余部分，现在可以裁切题目了", Toast.LENGTH_LONG).show()
         } catch (e: Exception) {
-            Toast.makeText(this, "处理失败: ${e.message}", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "裁掉答题卡多余部分失败: ${e.message}", Toast.LENGTH_LONG).show()
+            e.printStackTrace()
         }
     }
 
     private fun cropQuestions() {
-        if (alignedMat == null) {
-            Toast.makeText(this, "请先处理图片", Toast.LENGTH_SHORT).show()
+        if (croppedPaperMat == null) {
+            Toast.makeText(this, "请先裁掉答题卡多余部分", Toast.LENGTH_SHORT).show()
             return
         }
 
         try {
-            Toast.makeText(this, "正在切题...", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "正在裁切题目...", Toast.LENGTH_SHORT).show()
 
             val folderName = buildStudentFolderName()
             val outputDir = File(
@@ -211,21 +208,22 @@ class MarkActivity : AppCompatActivity() {
 
             val cropBoxes = CropConfigActivity.getCropBoxes(this)
             val croppedFiles = if (cropBoxes.isNotEmpty()) {
-                CropManager().cropWithCustomBoxes(alignedMat!!, outputDir, cropBoxes, studentInfo)
+                CropManager().cropWithCustomBoxes(croppedPaperMat!!, outputDir, cropBoxes, studentInfo)
             } else {
-                CropManager().cropAllQuestions(alignedMat!!, outputDir, studentInfo)
+                CropManager().cropAllQuestions(croppedPaperMat!!, outputDir, studentInfo)
             }
 
             saveButton.isEnabled = true
 
             Toast.makeText(
                 this,
-                "切题完成！共 ${croppedFiles.size} 道题目\n学生: ${studentInfo.studentName ?: studentInfo.studentId}\n保存位置: Pictures/ScanMarker/$folderName",
+                "题目裁切完成！共 ${croppedFiles.size} 道题目\n学生: ${studentInfo.studentName}\n保存位置: Pictures/ScanMarker/$folderName",
                 Toast.LENGTH_LONG
             ).show()
 
         } catch (e: Exception) {
-            Toast.makeText(this, "切题失败: ${e.message}", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "题目裁切失败: ${e.message}", Toast.LENGTH_SHORT).show()
+            e.printStackTrace()
         }
     }
 
@@ -236,26 +234,13 @@ class MarkActivity : AppCompatActivity() {
         return "${namePart}${idPart}${classPart}_${studentInfo.batchId}"
     }
 
-    private fun saveStudentInfo(outputDir: File) {
-        val infoFile = File(outputDir, "student_info.txt")
-        val content = """
-            批次ID: ${studentInfo.batchId}
-            学号: ${studentInfo.studentId}
-            姓名: ${studentInfo.studentName}
-            班级: ${studentInfo.classInfo}
-            创建时间: ${java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(java.util.Date())}
-        """.trimIndent()
-
-        FileOutputStream(infoFile).use { it.write(content.toByteArray()) }
-    }
-
     private fun saveResult() {
-        Toast.makeText(this, "切题已完成，题目已保存", Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, "题目已保存，完成！", Toast.LENGTH_SHORT).show()
         finish()
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        alignedMat?.release()
+        croppedPaperMat?.release()
     }
 }

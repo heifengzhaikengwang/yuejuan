@@ -106,10 +106,10 @@ class CropManager {
 
         cropBoxes.forEachIndexed { index, box ->
             val scaledRect = RectF(
-                box.left * scaleX,
-                box.top * scaleY,
-                box.right * scaleX,
-                box.bottom * scaleY
+                (box.left * scaleX).toFloat(),
+                (box.top * scaleY).toFloat(),
+                (box.right * scaleX).toFloat(),
+                (box.bottom * scaleY).toFloat()
             )
 
             val intRect = Rect(
